@@ -15,7 +15,7 @@
     "@capacitor/ios": "latest",
     "@capacitor/haptics": "latest",
     "@capacitor-firebase/analytics": "latest",
-    "admob-plus-capacitor": "latest"
+    "@capacitor-community/admob": "latest"
   },
   "devDependencies": {
     "vite": "^5.0.0",

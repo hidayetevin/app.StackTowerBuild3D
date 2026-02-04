@@ -59,7 +59,7 @@ class AudioManager {
     }
 
     // Procedural Sound Generation (No assets needed!)
-    playSound(name) {
+    playSound(name, pitchMultiplier = 1.0) {
         if (!this.initialized || this.isMuted) return;
         this.resumeContext();
 
@@ -86,8 +86,9 @@ class AudioManager {
             case 'perfect':
                 // High Ping form C5 to C6
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(523.25, now); // C5
-                osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.1); // C6
+                const baseFreq = 523.25 * pitchMultiplier;
+                osc.frequency.setValueAtTime(baseFreq, now); // C5 scaled
+                osc.frequency.exponentialRampToValueAtTime(baseFreq * 2.0, now + 0.1); // C6 scaled
                 gain.gain.setValueAtTime(0.3, now);
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
                 osc.start(now);
@@ -95,10 +96,10 @@ class AudioManager {
                 break;
 
             case 'combo':
-                // Ascending Arpeggio
-                this.playTone(523.25, now, 0.1, 'sine');
-                this.playTone(659.25, now + 0.1, 0.1, 'sine');
-                this.playTone(783.99, now + 0.2, 0.2, 'sine');
+                // Ascending Arpeggio scaled
+                this.playTone(523.25 * pitchMultiplier, now, 0.1, 'sine');
+                this.playTone(659.25 * pitchMultiplier, now + 0.1, 0.1, 'sine');
+                this.playTone(783.99 * pitchMultiplier, now + 0.2, 0.2, 'sine');
                 break;
 
             case 'fail':

@@ -283,8 +283,13 @@ export class Game {
 
             if (result.result.isPerfect) {
                 this.scoring.registerPerfectHit();
-                AudioManager.playSound('perfect');
-                if (combo > 1) AudioManager.playSound('combo');
+
+                // Calculate pitch based on combo (max out at 2.0x pitch after 10 combos)
+                const comboMult = Math.min(1.0 + (combo * 0.1), 2.5);
+
+                AudioManager.playSound('perfect', comboMult);
+                if (combo > 1) AudioManager.playSound('combo', comboMult);
+
                 Analytics.track('perfect_hit', { score: currentScore, combo: combo });
 
                 const perfectTexts = LocalizationManager.getCurrentLang() === 'TR' ? ["MÜKEMMEL!", "FISTIK GİBİ!"] : ["PERFECT!", "AWESOME!"];

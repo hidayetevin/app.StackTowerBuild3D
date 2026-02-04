@@ -174,6 +174,7 @@ export class HUD {
     showGameUI() {
         this.container.style.display = 'block';
         this.scoreEl.innerText = '0';
+        this.updateCoins(0);
         this.updateCombo(0);
         this.pauseBtn.style.display = 'block';
     }

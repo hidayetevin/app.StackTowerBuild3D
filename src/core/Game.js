@@ -215,6 +215,9 @@ export class Game {
         this.difficulty.reset();
         this.cameraController.reset();
         this.hud.updateScore(this.scoring.getScore());
+
+        this.sessionCoins = 0;
+        this.hud.updateCoins(0);
     }
 
     onInput() {
@@ -255,13 +258,14 @@ export class Game {
             const coinAwarded = this.scoring.checkAccuracyStreak(percentage);
             if (coinAwarded) {
                 const newTotal = this.retentionSystem.addCoins(1);
+                this.sessionCoins = (this.sessionCoins || 0) + 1;
 
                 // Spawn Effect
                 const screenPos = this.getScreenPosition(blockPos);
                 // Adjust a bit upwards to account for block height roughly
                 this.hud.spawnFloatingCoin(screenPos.x - 15, screenPos.y - 50);
 
-                setTimeout(() => this.hud.updateCoins(newTotal), 800);
+                setTimeout(() => this.hud.updateCoins(this.sessionCoins), 800);
 
                 AudioManager.playSound('perfect');
             }

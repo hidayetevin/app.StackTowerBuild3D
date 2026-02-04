@@ -45,7 +45,9 @@ export const TEXTS = {
         TRIAL_CONFIRM: "Watch Ad to try this theme for this session?",
         SESSION_APPLIED: "Theme applied for this session!",
         ERROR_NO_COIN_SYS: "Error: No Coin System",
-        UNLOCK_VIA: "Unlock via:"
+        UNLOCK_VIA: "Unlock via:",
+        WATCH_AD_2X: "Watch 2x Win",
+        YOU_WON_COINS: "You won"
     },
     TR: {
         PLAY: "OYNA",
@@ -93,6 +95,8 @@ export const TEXTS = {
         TRIAL_CONFIRM: "Bu oturumda denemek için reklam izle?",
         SESSION_APPLIED: "Tema bu oturum için uygulandı!",
         ERROR_NO_COIN_SYS: "Hata: Coin Sistemi Yok",
-        UNLOCK_VIA: "Kilit Yöntemi:"
+        UNLOCK_VIA: "Kilit Yöntemi:",
+        WATCH_AD_2X: "İzle 2x Kazan",
+        YOU_WON_COINS: "Kazandın"
     }
 };

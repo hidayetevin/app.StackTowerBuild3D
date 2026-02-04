@@ -83,6 +83,7 @@ export class Game {
             onRetry: () => this.checkTutorialAndStart(),
             onMenu: () => this.goToMenu()
         });
+        this.gameOverScreen.setRetentionSystem(this.retentionSystem);
 
         this.settingsMenu = new SettingsMenu({
             onToggleSound: () => AudioManager.toggleMute(),
@@ -359,7 +360,7 @@ export class Game {
         this.hud.hideGameUI();
         Analytics.track('game_over', { score: this.scoring.getScore(), max_combo: this.scoring.getCombo() });
         AdsManager.showInterstitial();
-        this.gameOverScreen.setScore(this.scoring.getScore());
+        this.gameOverScreen.setScore(this.scoring.getScore(), this.sessionCoins || 0);
         this.gameOverScreen.show();
     }
 

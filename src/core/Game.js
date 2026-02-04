@@ -85,7 +85,7 @@ export class Game {
         this.update = this.update.bind(this);
         this.speedMultiplier = 1.0;
 
-        this.challengeMode = null; // Store active challenge config
+        this.challengeMode = null;
 
         this.init();
     }
@@ -221,14 +221,8 @@ export class Game {
                 this.scoring.resetCombo();
                 AudioManager.playSound('tap');
 
-                // Challenge Update: Reset streak if needed?
-                // For 'perfect_streak', a non-perfect hit breaks the streak in most games.
-                // Assuming challengeManager handles reset logic internally or we pass it.
-                // But simplified:
                 if (this.challengeMode && this.challengeMode.type === 'perfect_streak') {
-                    // Technically a miss of "perfect"
-                    // We might fail the challenge or just reset counter.
-                    // Let's reset counter for continuous play.
+                    // Check specific reset logic if needed
                 }
             }
 
@@ -250,8 +244,13 @@ export class Game {
 
             // Challenge Progress (Score / Blocks)
             if (this.challengeMode) {
-                if (this.checkChallengeProgress('score', currentScore)) return; // If completed, stop
+                if (this.checkChallengeProgress('score', currentScore)) return;
             }
+
+            // AUTO UNLOCK CHECK (SKINS/THEMES)
+            this.skinManager.checkAutoUnlock(currentScore);
+            this.themeManager.checkAutoUnlock(currentScore);
+
 
             // Tutorial Hook
             if (this.stateMachine.getState() === STATES.TUTORIAL) {

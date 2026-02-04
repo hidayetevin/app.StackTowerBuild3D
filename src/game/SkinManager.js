@@ -15,7 +15,6 @@ export class SkinManager {
             this.applySkin(this.currentSkinId);
         } catch (e) {
             console.error('Failed to load skins', e);
-            // Fallback default
             this.skins = [{
                 id: 'default', name: 'Classic', unlocked: true, color: '#4CAF50'
             }];
@@ -37,6 +36,10 @@ export class SkinManager {
         if (!this.unlockedSkins.includes(skinId)) {
             this.unlockedSkins.push(skinId);
             this.saveSystem.set('unlocked_skins', this.unlockedSkins);
+
+            // Notify / Toast (Optional)
+            console.log(`Unlocked skin: ${skinId}`);
+
             return true;
         }
         return false;
@@ -51,11 +54,30 @@ export class SkinManager {
         this.currentSkinId = skinId;
         this.saveSystem.set('current_skin', skinId);
 
-        // Notify Tower to update Block materials
         if (this.tower && this.tower.setBlockStyle) {
             this.tower.setBlockStyle(skin);
         }
-
         return true;
+    }
+
+    checkAutoUnlock(score) {
+        let unlockedAny = false;
+
+        this.skins.forEach(skin => {
+            if (!this.isUnlocked(skin.id) &&
+                skin.unlockMethod === 'score_threshold' &&
+                score >= skin.unlockValue) {
+
+                this.unlockSkin(skin.id);
+                unlockedAny = true;
+
+                // Show simple toast or alert (Could remain silent or use game UI)
+                // For now, console log and hopefully UI toast if available
+                const event = new CustomEvent('skin-unlocked', { detail: { name: skin.name } });
+                window.dispatchEvent(event);
+            }
+        });
+
+        return unlockedAny;
     }
 }

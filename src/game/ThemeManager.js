@@ -59,14 +59,30 @@ export class ThemeManager {
             this.saveSystem.set('current_theme', themeId);
         }
 
-        // Apply visual changes via SceneManager
         if (this.sceneManager) {
             this.sceneManager.applyTheme(theme);
         }
 
-        // Update Accent Color
         document.documentElement.style.setProperty('--accent-color', theme.uiAccent || '#4CAF50');
-
         return true;
+    }
+
+    checkAutoUnlock(score) {
+        let unlockedAny = false;
+
+        this.themes.forEach(theme => {
+            if (!this.isUnlocked(theme.id) &&
+                theme.unlockMethod === 'score_threshold' &&
+                score >= theme.unlockValue) {
+
+                this.unlockTheme(theme.id);
+                unlockedAny = true;
+
+                const event = new CustomEvent('theme-unlocked', { detail: { name: theme.name } });
+                window.dispatchEvent(event);
+            }
+        });
+
+        return unlockedAny;
     }
 }

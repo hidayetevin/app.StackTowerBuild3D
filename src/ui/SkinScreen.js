@@ -1,3 +1,5 @@
+import AdsManager from '../monetization/AdsManager.js';
+
 export class SkinScreen {
     constructor(skinManager, analytics) {
         this.skinManager = skinManager;
@@ -14,7 +16,8 @@ export class SkinScreen {
         this.container.innerHTML = `
             <h2 style="color:white; font-family:Arial; margin-bottom:30px;">SKINS</h2>
             <div id="skin-list" style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center; max-width: 80%;"></div>
-            <button id="btn-close-skins" style="margin-top:40px; padding:10px 30px; border-radius:20px; border:none; background:#555; color:white; font-size:16px;">CLOSE</button>
+            <p id="skin-msg" style="color:white; margin-top:20px; font-style:italic; height:20px;"></p>
+            <button id="btn-close-skins" style="margin-top:20px; padding:10px 30px; border-radius:20px; border:none; background:#555; color:white; font-size:16px;">CLOSE</button>
         `;
 
         document.body.appendChild(this.container);
@@ -30,6 +33,7 @@ export class SkinScreen {
 
     hide() {
         this.container.style.display = 'none';
+        this.container.querySelector('#skin-msg').innerText = '';
     }
 
     renderList() {
@@ -48,7 +52,9 @@ export class SkinScreen {
             `;
 
             if (!skin.unlocked) {
-                el.innerHTML = `<span style="font-size:20px;">🔒</span><span style="font-size:10px; color:white;">${skin.unlockMethod}</span>`;
+                // If rewarded ad is unlock method, show Play Icon
+                const icon = skin.unlockMethod === 'rewarded_ad' ? '▶️' : '🔒';
+                el.innerHTML = `<span style="font-size:20px;">${icon}</span>`;
             } else if (this.skinManager.currentSkinId === skin.id) {
                 el.innerHTML = `<span style="font-size:24px;">✓</span>`;
             }
@@ -58,16 +64,34 @@ export class SkinScreen {
         });
     }
 
-    onSkinClick(skin) {
+    async onSkinClick(skin) {
         if (skin.unlocked) {
             this.skinManager.applySkin(skin.id);
             this.renderList();
             this.analytics.track('skin_selected', { skin_id: skin.id });
         } else {
             console.log("Locked skin clicked:", skin.name);
-            // Handle unlock logic (e.g., check ads or score)
-            // For MVP simplicity, we might just log or show a toast
-            alert(`Unlock this skin via: ${skin.unlockMethod}`);
+
+            if (skin.unlockMethod === 'rewarded_ad') {
+                if (confirm(`Watch an Ad to unlock ${skin.name}?`)) {
+                    const success = await AdsManager.showRewarded('unlock_skin');
+                    if (success) {
+                        this.skinManager.unlockSkin(skin.id);
+                        this.skinManager.applySkin(skin.id);
+                        this.renderList();
+                        this.showMessage(`Unlocked ${skin.name}!`);
+                        this.analytics.track('skin_unlocked', { skin_id: skin.id, method: 'rewarded_ad' });
+                    } else {
+                        this.showMessage("Ad failed or cancelled.");
+                    }
+                }
+            } else {
+                this.showMessage(`Unlock via: ${skin.unlockMethod} (Value: ${skin.unlockValue})`);
+            }
         }
+    }
+
+    showMessage(msg) {
+        this.container.querySelector('#skin-msg').innerText = msg;
     }
 }

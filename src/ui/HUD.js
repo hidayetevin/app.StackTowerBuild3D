@@ -6,9 +6,12 @@ export class HUD {
         this.container.style.top = '0';
         this.container.style.left = '0';
         this.container.style.width = '100%';
+        this.container.style.width = '100%'; // Full width
+        this.container.style.height = '100%'; // Full height for floating anims
         this.container.style.pointerEvents = 'none';
         this.container.style.fontFamily = 'Arial, sans-serif';
         this.container.style.zIndex = '500';
+        this.container.style.overflow = 'hidden'; // Don't show scrolls
 
         // Score
         this.scoreEl = document.createElement('div');
@@ -25,7 +28,7 @@ export class HUD {
         // Combo
         this.comboEl = document.createElement('div');
         this.comboEl.style.position = 'absolute';
-        this.comboEl.style.top = '120px'; // Shifted down a bit
+        this.comboEl.style.top = '120px';
         this.comboEl.style.left = '50%';
         this.comboEl.style.transform = 'translateX(-50%) scale(0)';
         this.comboEl.style.fontSize = '32px';
@@ -37,6 +40,7 @@ export class HUD {
 
         // Coins Display
         this.coinEl = document.createElement('div');
+        this.coinEl.id = 'hud-coin-container';
         this.coinEl.style.position = 'absolute';
         this.coinEl.style.top = '25px';
         this.coinEl.style.left = '20px';
@@ -72,7 +76,7 @@ export class HUD {
 
         this.container.appendChild(this.scoreEl);
         this.container.appendChild(this.comboEl);
-        this.container.appendChild(this.coinEl); // Added Coins
+        this.container.appendChild(this.coinEl);
         this.container.appendChild(this.pauseBtn);
 
         document.body.appendChild(this.container);
@@ -104,8 +108,7 @@ export class HUD {
         const el = document.createElement('div');
         el.innerText = text;
         el.style.position = 'absolute';
-        // Adjust positions so they don't overlap too much
-        el.style.top = '170px';
+        el.style.top = '200px';
         el.style.left = '50%';
         el.style.transform = 'translateX(-50%)';
         el.style.fontSize = '24px';
@@ -122,9 +125,50 @@ export class HUD {
             el.style.opacity = '0';
         });
 
+        setTimeout(() => { el.remove(); }, 1000);
+    }
+
+    spawnFloatingCoin(x, y) {
+        const coin = document.createElement('div');
+        coin.innerText = '💰';
+        coin.style.position = 'absolute';
+        coin.style.left = x + 'px';
+        coin.style.top = y + 'px';
+        coin.style.fontSize = '40px';
+        coin.style.zIndex = '600';
+        coin.style.pointerEvents = 'none';
+        coin.style.transition = 'all 0.8s ease-in-out';
+
+        this.container.appendChild(coin);
+
+        // Target is the coin count in top left
+        // Get target bounding rect
+        // Since we know position is top 25, left 20.. target center roughly:
+        const targetX = 50;
+        const targetY = 40;
+
+        // Use timeout to ensure DOM render before transforming
         setTimeout(() => {
-            el.remove();
-        }, 1000);
+            coin.style.left = targetX + 'px';
+            coin.style.top = targetY + 'px';
+            coin.style.fontSize = '20px';
+            coin.style.opacity = '0.5';
+        }, 50);
+
+        setTimeout(() => {
+            coin.remove();
+
+            // Pop effect on coin counter
+            const counter = this.container.querySelector('#hud-coin-container');
+            if (counter) {
+                counter.style.transform = 'scale(1.5)';
+                counter.style.color = '#fff';
+                setTimeout(() => {
+                    counter.style.transform = 'scale(1.0)';
+                    counter.style.color = '#FFD700';
+                }, 200);
+            }
+        }, 850);
     }
 
     showGameUI() {

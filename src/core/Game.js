@@ -48,15 +48,13 @@ export class Game {
         this.retentionSystem = new RetentionSystem();
         this.tutorialSystem = new TutorialSystem(this);
 
-        // Phase 7 Managers
         this.skinManager = new SkinManager(this.retentionSystem.saveSystem, this.tower);
         this.themeManager = new ThemeManager(this.retentionSystem.saveSystem, this.sceneManager);
         this.challengeManager = new ChallengeManager();
 
         this.hud = new HUD(() => this.pauseGame());
-        this.hud.updateCoins(this.retentionSystem.getCoins()); // Init coins
+        this.hud.updateCoins(this.retentionSystem.getCoins());
 
-        // Screens
         this.skinScreen = new SkinScreen(this.skinManager, Analytics);
         this.themeScreen = new ThemeScreen(this.themeManager, Analytics);
         this.challengeScreen = new ChallengeScreen(this.challengeManager, Analytics, (challengeConfig) => {
@@ -93,7 +91,6 @@ export class Game {
 
         this.update = this.update.bind(this);
         this.speedMultiplier = 1.0;
-
         this.challengeMode = null;
 
         this.init();
@@ -131,6 +128,12 @@ export class Game {
     // ... goToMenu, pauseGame, resumeGame ...
     goToMenu() {
         this.stateMachine.setState(STATES.MENU);
+
+        // Refresh coins in main menu
+        if (this.mainMenu && this.mainMenu.updateCoins) {
+            this.mainMenu.updateCoins(this.retentionSystem.getCoins());
+        }
+
         this.mainMenu.show();
         this.gameOverScreen.hide();
         this.skinScreen.hide();
@@ -141,7 +144,6 @@ export class Game {
         this.hud.hideGameUI();
         this.challengeMode = null;
 
-        // Refresh coins in case they were added elsewhere
         this.hud.updateCoins(this.retentionSystem.getCoins());
     }
 
@@ -165,7 +167,7 @@ export class Game {
         this.gameOverScreen.hide();
         this.pauseMenu.hide();
         this.hud.showGameUI();
-        this.hud.updateCoins(this.retentionSystem.getCoins()); // Ensure UI is sync
+        this.hud.updateCoins(this.retentionSystem.getCoins());
         AudioManager.playSound('tap');
 
         if (!this.tutorialSystem.isCompleted()) {
@@ -175,6 +177,7 @@ export class Game {
         }
     }
 
+    // ... startChallenge, startTutorial, startGame ...
     startChallenge(config) {
         this.challengeMode = config;
         AdsManager.hideBanner();
@@ -221,8 +224,21 @@ export class Game {
         }
     }
 
+    getScreenPosition(vector) {
+        if (!vector) return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+        const tempV = vector.clone();
+        tempV.project(this.cameraController.camera);
+
+        const x = (tempV.x * .5 + .5) * this.renderer.domElement.clientWidth;
+        const y = (-(tempV.y * .5) + .5) * this.renderer.domElement.clientHeight;
+
+        return { x, y };
+    }
+
     placeBlock() {
         const result = this.tower.placeCurrentBlock();
+        const blockPos = this.tower.getTopBlock() ? this.tower.getTopBlock().mesh.position : new THREE.Vector3();
 
         if (!result.success) {
             AudioManager.playSound('fail');
@@ -233,16 +249,22 @@ export class Game {
             const combo = this.scoring.getCombo();
             const percentage = result.result.percentage;
 
-            // Check Coins Logic (Moved outside if/else to handle both Perfect(100%) and Good(70+%)
             const coinAwarded = this.scoring.checkAccuracyStreak(percentage);
             if (coinAwarded) {
                 const newTotal = this.retentionSystem.addCoins(1);
-                this.hud.updateCoins(newTotal);
-                this.hud.showFeedback("+1 COIN!", "#FFD700");
-                AudioManager.playSound('perfect'); // Reuse sound or new 'coin' sound
+
+                // Spawn Effect
+                const screenPos = this.getScreenPosition(blockPos);
+                // Adjust a bit upwards to account for block height roughly
+                this.hud.spawnFloatingCoin(screenPos.x - 15, screenPos.y - 50);
+
+                // Delay update HUD to sync with anim later or now? 
+                // Let's update text now, animation is separate eye candy
+                setTimeout(() => this.hud.updateCoins(newTotal), 800);
+
+                AudioManager.playSound('perfect');
             }
 
-            // FEEDBACK LOGIC
             if (result.result.isPerfect) {
                 this.scoring.registerPerfectHit();
                 AudioManager.playSound('perfect');
@@ -277,7 +299,7 @@ export class Game {
                     color = '#FF0000';
                 }
 
-                if (text && !coinAwarded) this.hud.showFeedback(text, color); // Priority to Coin feedback if coincided
+                if (text && !coinAwarded) this.hud.showFeedback(text, color);
             }
 
             this.hud.updateScore(currentScore);
@@ -313,6 +335,7 @@ export class Game {
         }
     }
 
+    // ... rest of file ...
     checkChallengeProgress(metric, value) {
         if (!this.challengeMode) return false;
 

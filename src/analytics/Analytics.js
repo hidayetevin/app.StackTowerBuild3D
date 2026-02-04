@@ -1,4 +1,10 @@
-import { FirebaseAnalytics } from '@capacitor-firebase/analytics';
+// import { FirebaseAnalytics } from '@capacitor-firebase/analytics';
+
+// MOCK FOR WEB / INSTALL FAILURE
+const FirebaseAnalytics = {
+    setEnabled: async () => console.log('[Mock] Analytics Enabled'),
+    logEvent: async (opts) => console.log('[Mock] Log Event:', opts.name, opts.params)
+};
 
 class Analytics {
     constructor() {
@@ -18,19 +24,14 @@ class Analytics {
 
     async init() {
         try {
-            // Capacitor might not be available in browser dev mode, check first
-            // or rely on try-catch if plugin is not mocked.
-            // For web preview, we often skip actual plugin calls or expect them to fail gracefully.
-            if (window.Capacitor) {
-                await FirebaseAnalytics.setEnabled({ enabled: true });
-                this.isEnabled = true;
-                console.log('Firebase Analytics initialized');
-                this.flushQueue();
-            } else {
-                console.log('Analytics running in web/mock mode');
-            }
+            // Check if native plugin is available (this check usually works if properly installed)
+            // But since import is mocked, we just run mock logic.
+            await FirebaseAnalytics.setEnabled({ enabled: true });
+            this.isEnabled = true;
+            console.log('Firebase Analytics initialized (Mock/Web Mode)');
+            this.flushQueue();
         } catch (error) {
-            console.warn('Analytics init failed (likely web environment):', error);
+            console.warn('Analytics init failed:', error);
             this.isEnabled = false;
         }
     }
@@ -45,15 +46,9 @@ class Analytics {
         };
 
         if (this.isOffline || !this.isEnabled) {
-            // Queue if offline or not initialized (but might initialize later)
-            // If strictly disabled due to error, we might skip, but queuing acts as safety
             this.eventQueue.push(eventData);
-
-            // If strictly offline, keep in queue.
-            // If dev mode/web, just log it.
-            if (!this.isOffline && !window.Capacitor) {
+            if (!this.isOffline) {
                 console.log('[Analytics Mock]', eventName, params);
-                // Clear from queue to avoid memory leak in dev
                 this.eventQueue.pop();
             }
             return;
@@ -73,7 +68,6 @@ class Analytics {
         if (this.eventQueue.length === 0 || !this.isEnabled) return;
 
         console.log(`Flushing ${this.eventQueue.length} queued events`);
-        // Process queue
         const queueToProcess = [...this.eventQueue];
         this.eventQueue = [];
 

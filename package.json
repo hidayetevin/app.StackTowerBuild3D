@@ -10,15 +10,15 @@
   },
   "dependencies": {
     "three": "^0.160.0",
-    "@capacitor/core": "^5.7.0",
-    "@capacitor/android": "^5.7.0",
-    "@capacitor/ios": "^5.7.0",
-    "@capacitor/haptics": "^5.0.0",
-    "@capacitor-firebase/analytics": "^5.0.0",
-    "admob-plus-capacitor": "^2.0.0-alpha.1"
+    "@capacitor/core": "latest",
+    "@capacitor/android": "latest",
+    "@capacitor/ios": "latest",
+    "@capacitor/haptics": "latest",
+    "@capacitor-firebase/analytics": "latest",
+    "admob-plus-capacitor": "latest"
   },
   "devDependencies": {
     "vite": "^5.0.0",
-    "@capacitor/cli": "^5.7.0"
+    "@capacitor/cli": "latest"
   }
 }

@@ -89,7 +89,10 @@ export class SettingsMenu {
         this.container.style.display = 'flex';
     }
 
-    // ... hide ...
+    hide() {
+        this.container.style.display = 'none';
+        if (this.callbacks.onClose) this.callbacks.onClose();
+    }
 
     updateButtons(isSoundMuted, isMusicMuted, isHapticEnabled) {
         if (isSoundMuted !== null && isSoundMuted !== undefined) {

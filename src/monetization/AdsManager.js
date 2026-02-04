@@ -27,10 +27,11 @@ class AdsManager {
         this.gameOverCount = 0;
 
         this.adIds = {
-            banner: 'ca-app-pub-TEST/banner',
-            interstitial: 'ca-app-pub-TEST/interstitial',
-            rewarded: 'ca-app-pub-TEST/rewarded'
+            banner: 'ca-app-pub-4190858087915294/6293542928',
+            interstitial: 'ca-app-pub-4190858087915294/1552244338',
+            rewarded: 'ca-app-pub-4190858087915294/3667379581'
         };
+        this.appId = 'ca-app-pub-4190858087915294~7606624597'; // For reference regarding AndroidManifest/Info.plist
     }
 
     async init() {

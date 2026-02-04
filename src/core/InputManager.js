@@ -20,9 +20,21 @@ export class InputManager {
     }
 
     handleInput(event) {
-        // Prevent default behavior to avoid scrolling or zooming on double tap
+        // Check if we are interacting with UI
+        const target = event.target;
+        const isInteractive = target.tagName === 'BUTTON' || target.tagName === 'A' || target.tagName === 'INPUT' || target.closest('button') || target.closest('.interactive');
+
+        if (isInteractive) {
+            // Let the UI handle it. Do NOT prevent default.
+            return;
+        }
+
+        // Prevent default behavior ONLY if it's a game input (canvas or body), to avoid scrolling
         if (event.type === 'touchstart') {
-            event.preventDefault();
+            // Check if touch is on canvas (game area)
+            if (target.tagName === 'CANVAS' || target === document.body) {
+                event.preventDefault();
+            }
         }
 
         if (this.actionCallback) {

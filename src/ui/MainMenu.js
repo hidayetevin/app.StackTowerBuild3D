@@ -18,6 +18,7 @@ export class MainMenu {
         this.container.style.backgroundColor = 'rgba(0,0,0,0.4)';
         this.container.style.backdropFilter = 'blur(5px)';
         this.container.style.zIndex = '1000';
+        this.container.style.pointerEvents = 'auto';
 
         const TXT = (k) => LocalizationManager.get(k);
 

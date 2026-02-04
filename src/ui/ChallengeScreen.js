@@ -12,6 +12,7 @@ export class ChallengeScreen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); z-index: 1200; display: none;
             flex-direction: column; align-items: center; justify-content: center;
+            pointer-events: auto;
         `;
 
         // Removed appendChild from constructor to allow simple show re-render or lazy append

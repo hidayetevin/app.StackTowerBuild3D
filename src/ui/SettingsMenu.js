@@ -16,6 +16,7 @@ export class SettingsMenu {
         this.container.style.justifyContent = 'center';
         this.container.style.backgroundColor = 'rgba(0,0,0,0.9)';
         this.container.style.zIndex = '1100';
+        this.container.style.pointerEvents = 'auto';
 
         this.render();
         document.body.appendChild(this.container);

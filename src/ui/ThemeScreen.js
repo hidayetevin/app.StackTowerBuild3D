@@ -13,6 +13,7 @@ export class ThemeScreen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); z-index: 1200; display: none;
             flex-direction: column; align-items: center; justify-content: center;
+            pointer-events: auto;
         `;
 
         this.buildUI();

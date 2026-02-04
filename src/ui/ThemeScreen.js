@@ -85,6 +85,9 @@ export class ThemeScreen {
                 } else if (theme.unlockMethod === 'rewarded_trial') {
                     status.innerHTML = 'Trial (Ad)';
                     status.style.color = '#00FFFF';
+                } else if (theme.unlockMethod === 'score_threshold') {
+                    status.innerHTML = `Score > ${theme.unlockValue}`;
+                    status.style.color = '#FF8888';
                 } else {
                     status.innerHTML = '🔒';
                 }

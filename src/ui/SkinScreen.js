@@ -90,6 +90,10 @@ export class SkinScreen {
                     infoDiv.innerHTML = `<span style="font-size:14px; color:#FFD700;">💰 ${skin.unlockValue}</span>`;
                 } else if (skin.unlockMethod === 'rewarded_ad') {
                     infoDiv.innerHTML = `<span style="font-size:20px;">▶️</span>`;
+                } else if (skin.unlockMethod === 'score_threshold') {
+                    infoDiv.innerHTML = `<span style="font-size:11px; color:#aaa;">Score: ${skin.unlockValue}</span>`;
+                } else if (skin.unlockMethod === 'daily_login') {
+                    infoDiv.innerHTML = `<span style="font-size:11px; color:#aaa;">Day: ${skin.unlockValue}</span>`;
                 } else {
                     infoDiv.innerHTML = `<span style="font-size:16px;">🔒</span>`;
                 }

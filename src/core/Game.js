@@ -54,6 +54,7 @@ export class Game {
         this.challengeManager = new ChallengeManager();
 
         this.hud = new HUD(() => this.pauseGame());
+        this.hud.updateCoins(this.retentionSystem.getCoins()); // Init coins
 
         // Screens
         this.skinScreen = new SkinScreen(this.skinManager, Analytics);
@@ -98,7 +99,7 @@ export class Game {
         this.init();
     }
 
-    // ... init, goToMenu ... 
+    // ... init ...
     async init() {
         await Analytics.init();
         await AdsManager.init();
@@ -127,6 +128,7 @@ export class Game {
         this.loadingScreen.hide();
     }
 
+    // ... goToMenu, pauseGame, resumeGame ...
     goToMenu() {
         this.stateMachine.setState(STATES.MENU);
         this.mainMenu.show();
@@ -138,6 +140,9 @@ export class Game {
         AdsManager.showBanner();
         this.hud.hideGameUI();
         this.challengeMode = null;
+
+        // Refresh coins in case they were added elsewhere
+        this.hud.updateCoins(this.retentionSystem.getCoins());
     }
 
     pauseGame() {
@@ -160,6 +165,7 @@ export class Game {
         this.gameOverScreen.hide();
         this.pauseMenu.hide();
         this.hud.showGameUI();
+        this.hud.updateCoins(this.retentionSystem.getCoins()); // Ensure UI is sync
         AudioManager.playSound('tap');
 
         if (!this.tutorialSystem.isCompleted()) {
@@ -169,7 +175,6 @@ export class Game {
         }
     }
 
-    // ... startChallenge, startTutorial, startGame ...
     startChallenge(config) {
         this.challengeMode = config;
         AdsManager.hideBanner();
@@ -228,6 +233,15 @@ export class Game {
             const combo = this.scoring.getCombo();
             const percentage = result.result.percentage;
 
+            // Check Coins Logic (Moved outside if/else to handle both Perfect(100%) and Good(70+%)
+            const coinAwarded = this.scoring.checkAccuracyStreak(percentage);
+            if (coinAwarded) {
+                const newTotal = this.retentionSystem.addCoins(1);
+                this.hud.updateCoins(newTotal);
+                this.hud.showFeedback("+1 COIN!", "#FFD700");
+                AudioManager.playSound('perfect'); // Reuse sound or new 'coin' sound
+            }
+
             // FEEDBACK LOGIC
             if (result.result.isPerfect) {
                 this.scoring.registerPerfectHit();
@@ -235,7 +249,6 @@ export class Game {
                 if (combo > 1) AudioManager.playSound('combo');
                 Analytics.track('perfect_hit', { score: currentScore, combo: combo });
 
-                // Show floating text
                 const perfectTexts = LocalizationManager.getCurrentLang() === 'TR' ? ["MÜKEMMEL!", "FISTIK GİBİ!"] : ["PERFECT!", "AWESOME!"];
                 this.hud.showFeedback(perfectTexts[0], '#00FF00');
 
@@ -246,7 +259,6 @@ export class Game {
                 this.scoring.resetCombo();
                 AudioManager.playSound('tap');
 
-                // Show percentage feedback
                 let color = '#FFFFFF';
                 let text = '';
                 const pct = Math.floor(percentage * 100);
@@ -261,11 +273,11 @@ export class Game {
                     text = LocalizationManager.getCurrentLang() === 'TR' ? `İDARE EDER!` : `OKAY!`;
                     color = '#DDDDDD';
                 } else {
-                    text = `%${pct}`; // Just show simple pct for bad ones
+                    text = `%${pct}`;
                     color = '#FF0000';
                 }
 
-                if (text) this.hud.showFeedback(text, color);
+                if (text && !coinAwarded) this.hud.showFeedback(text, color); // Priority to Coin feedback if coincided
             }
 
             this.hud.updateScore(currentScore);

@@ -25,7 +25,7 @@ export class HUD {
         // Combo
         this.comboEl = document.createElement('div');
         this.comboEl.style.position = 'absolute';
-        this.comboEl.style.top = '120px';
+        this.comboEl.style.top = '120px'; // Shifted down a bit
         this.comboEl.style.left = '50%';
         this.comboEl.style.transform = 'translateX(-50%) scale(0)';
         this.comboEl.style.fontSize = '32px';
@@ -34,6 +34,22 @@ export class HUD {
         this.comboEl.style.textShadow = '0 0 10px orange';
         this.comboEl.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
         this.comboEl.innerText = '';
+
+        // Coins Display
+        this.coinEl = document.createElement('div');
+        this.coinEl.style.position = 'absolute';
+        this.coinEl.style.top = '25px';
+        this.coinEl.style.left = '20px';
+        this.coinEl.style.background = 'rgba(0,0,0,0.5)';
+        this.coinEl.style.padding = '8px 15px';
+        this.coinEl.style.borderRadius = '20px';
+        this.coinEl.style.color = '#FFD700';
+        this.coinEl.style.fontSize = '24px';
+        this.coinEl.style.fontWeight = 'bold';
+        this.coinEl.style.display = 'flex';
+        this.coinEl.style.alignItems = 'center';
+        this.coinEl.style.gap = '10px';
+        this.coinEl.innerHTML = `<span>💰</span><span id="coin-count">0</span>`;
 
         // Pause Button
         this.pauseBtn = document.createElement('button');
@@ -56,9 +72,15 @@ export class HUD {
 
         this.container.appendChild(this.scoreEl);
         this.container.appendChild(this.comboEl);
+        this.container.appendChild(this.coinEl); // Added Coins
         this.container.appendChild(this.pauseBtn);
 
         document.body.appendChild(this.container);
+    }
+
+    updateCoins(amount) {
+        const el = this.container.querySelector('#coin-count');
+        if (el) el.innerText = amount;
     }
 
     updateScore(score) {
@@ -82,7 +104,8 @@ export class HUD {
         const el = document.createElement('div');
         el.innerText = text;
         el.style.position = 'absolute';
-        el.style.top = '170px'; // Below combo
+        // Adjust positions so they don't overlap too much
+        el.style.top = '170px';
         el.style.left = '50%';
         el.style.transform = 'translateX(-50%)';
         el.style.fontSize = '24px';
@@ -94,7 +117,6 @@ export class HUD {
 
         this.container.appendChild(el);
 
-        // Animate up and fade out
         requestAnimationFrame(() => {
             el.style.top = '100px';
             el.style.opacity = '0';

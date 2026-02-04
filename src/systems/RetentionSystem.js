@@ -6,6 +6,7 @@ export class RetentionSystem {
         this.saveSystem = new SaveSystem();
         this.loginStreak = this.saveSystem.get('login_streak', 0);
         this.lastLoginDate = this.saveSystem.get('last_login_date', null);
+        this.coins = this.saveSystem.get('coins', 0);
 
         this.missions = [
             { id: 'place_100', type: 'blocks_placed', target: 100, reward: { coins: 200 } },
@@ -13,6 +14,16 @@ export class RetentionSystem {
             { id: 'score_50', type: 'high_score', target: 50, reward: { skin: 'random' } }
         ];
         this.missionProgress = this.saveSystem.get('mission_progress', {});
+    }
+
+    addCoins(amount) {
+        this.coins += amount;
+        this.saveSystem.set('coins', this.coins);
+        return this.coins;
+    }
+
+    getCoins() {
+        return this.coins;
     }
 
     checkDailyLogin() {
@@ -39,6 +50,9 @@ export class RetentionSystem {
         };
 
         const reward = rewards[this.loginStreak] || { type: 'coins', amount: 50 };
+        if (reward.type === 'coins') {
+            this.addCoins(reward.amount);
+        }
         this.showRewardPopup(reward);
     }
 
@@ -70,6 +84,9 @@ export class RetentionSystem {
 
     completeMission(mission) {
         console.log("Mission Completed!", mission);
+        if (mission.reward && mission.reward.coins) {
+            this.addCoins(mission.reward.coins);
+        }
         Analytics.track('mission_completed', { mission_id: mission.id });
     }
 }

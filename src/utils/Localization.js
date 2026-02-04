@@ -46,6 +46,7 @@ export const TEXTS = {
         SESSION_APPLIED: "Theme applied for this session!",
         ERROR_NO_COIN_SYS: "Error: No Coin System",
         UNLOCK_VIA: "Unlock via:",
+        VIBRATION: "Vibration",
         WATCH_AD_2X: "Watch 2x Win",
         YOU_WON_COINS: "You won"
     },
@@ -96,6 +97,7 @@ export const TEXTS = {
         SESSION_APPLIED: "Tema bu oturum için uygulandı!",
         ERROR_NO_COIN_SYS: "Hata: Coin Sistemi Yok",
         UNLOCK_VIA: "Kilit Yöntemi:",
+        VIBRATION: "Titreşim",
         WATCH_AD_2X: "İzle 2x Kazan",
         YOU_WON_COINS: "Kazandın"
     }

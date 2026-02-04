@@ -20,6 +20,7 @@ import { PerformanceMonitor } from '../utils/PerformanceMonitor.js';
 import AudioManager from '../audio/AudioManager.js';
 import * as THREE from 'three';
 import AdsManager from '../monetization/AdsManager.js';
+import HapticManager from '../utils/HapticManager.js';
 import Analytics from '../analytics/Analytics.js';
 import LocalizationManager from '../utils/LocalizationManager.js';
 
@@ -73,7 +74,7 @@ export class Game {
 
         this.mainMenu = new MainMenu({
             onPlay: () => this.checkTutorialAndStart(),
-            onSettings: () => this.settingsMenu.show(AudioManager.isMuted, AudioManager.isMusicMuted),
+            onSettings: () => this.settingsMenu.show(AudioManager.isMuted, AudioManager.isMusicMuted, HapticManager.enabled),
             onSkins: () => this.skinScreen.show(),
             onThemes: () => this.themeScreen.show(),
             onChallenge: () => this.challengeScreen.show()
@@ -88,6 +89,10 @@ export class Game {
         this.settingsMenu = new SettingsMenu({
             onToggleSound: () => AudioManager.toggleMute(),
             onToggleMusic: () => AudioManager.toggleMusic(),
+            onToggleHaptic: () => {
+                HapticManager.toggle(!HapticManager.enabled);
+                return HapticManager.enabled;
+            },
             onClose: () => { }
         });
 
@@ -105,6 +110,7 @@ export class Game {
     async init() {
         await Analytics.init();
         await AdsManager.init();
+        HapticManager.init();
         await AudioManager.loadAll();
 
         await this.skinManager.loadSkins();
@@ -249,12 +255,16 @@ export class Game {
 
         if (!result.success) {
             AudioManager.playSound('fail');
+            HapticManager.failure();
             this.gameOver();
         } else {
             this.scoring.addPoint();
             const currentScore = this.scoring.getScore();
             const combo = this.scoring.getCombo();
             const percentage = result.result.percentage;
+
+            if (result.result.isPerfect) HapticManager.medium();
+            else HapticManager.light();
 
             const coinAwarded = this.scoring.checkAccuracyStreak(percentage);
             if (coinAwarded) {

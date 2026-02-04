@@ -14,6 +14,21 @@ export class ThemeScreen {
             background: rgba(0,0,0,0.9); z-index: 1200; display: none;
             flex-direction: column; align-items: center; justify-content: center;
         `;
+
+        this.buildUI();
+        if (document.body) document.body.appendChild(this.container);
+    }
+
+    buildUI() {
+        this.container.innerHTML = `
+            <div id="theme-balance" style="position:absolute; top:20px; right:20px; color:#FFD700; font-size:24px; font-weight:bold;"></div>
+            <h2 id="theme-title" style="color:white; font-family:Arial; margin-bottom:30px;">THEMES</h2>
+            <div id="theme-list" style="display:flex; flex-direction:column; gap:15px; width: 80%; max-height: 60%; overflow-y: auto;"></div>
+            <p id="theme-msg" style="color:white; margin-top:20px; font-style:italic; height:20px;"></p>
+            <button id="btn-close-themes" style="margin-top:20px; padding:10px 30px; border-radius:20px; border:none; background:#555; color:white; font-size:16px;">CLOSE</button>
+        `;
+
+        this.container.querySelector('#btn-close-themes').addEventListener('click', () => this.hide());
     }
 
     setRetentionSystem(rs) {
@@ -23,22 +38,19 @@ export class ThemeScreen {
     show() {
         const TXT = (k) => LocalizationManager.get(k);
 
-        this.container.innerHTML = `
-            <div id="theme-balance" style="position:absolute; top:20px; right:20px; color:#FFD700; font-size:24px; font-weight:bold;"></div>
-            <h2 style="color:white; font-family:Arial; margin-bottom:30px;">${TXT('THEMES')}</h2>
-            <div id="theme-list" style="display:flex; flex-direction:column; gap:15px; width: 80%; max-height: 60%; overflow-y: auto;"></div>
-            <p id="theme-msg" style="color:white; margin-top:20px; font-style:italic; height:20px;"></p>
-            <button id="btn-close-themes" style="margin-top:20px; padding:10px 30px; border-radius:20px; border:none; background:#555; color:white; font-size:16px;">${TXT('CLOSE')}</button>
-        `;
+        // Update Static Texts
+        this.container.querySelector('#theme-title').innerText = TXT('THEMES');
+        this.container.querySelector('#btn-close-themes').innerText = TXT('CLOSE');
 
-        this.container.querySelector('#btn-close-themes').addEventListener('click', () => this.hide());
-
-        if (!this.container.parentElement) document.body.appendChild(this.container);
+        if (!this.container.parentElement && document.body) document.body.appendChild(this.container);
 
         this.container.style.display = 'flex';
+        this.updateBalance();
         this.renderList();
         this.analytics.track('theme_screen_opened');
+    }
 
+    updateBalance() {
         if (this.retentionSystem) {
             this.container.querySelector('#theme-balance').innerText = `💰 ${this.retentionSystem.getCoins()}`;
         }
@@ -105,9 +117,7 @@ export class ThemeScreen {
             list.appendChild(el);
         });
 
-        if (this.retentionSystem) {
-            this.container.querySelector('#theme-balance').innerText = `💰 ${this.retentionSystem.getCoins()}`;
-        }
+        this.updateBalance();
     }
 
     async onThemeClick(theme) {
@@ -126,6 +136,10 @@ export class ThemeScreen {
                             this.themeManager.applyTheme(theme.id);
                             this.renderList();
                             this.showMessage(`${TXT('BOUGHT')} ${theme.name}!`);
+                            // Update HUD immediately
+                            if (window.gameInstance && window.gameInstance.hud) {
+                                window.gameInstance.hud.updateCoins(this.retentionSystem.getCoins());
+                            }
                         } else {
                             this.showMessage(TXT('NOT_ENOUGH_COINS'));
                         }

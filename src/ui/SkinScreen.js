@@ -15,14 +15,20 @@ export class SkinScreen {
             flex-direction: column; align-items: center; justify-content: center;
         `;
 
-        // this.render = this.render.bind(this); // helper to re-render easily if language changes? - REMOVED (undefined)
+        this.buildUI();
+        if (document.body) document.body.appendChild(this.container);
     }
 
-    initUI() {
-        const TXT = (k) => LocalizationManager.get(k);
-        // We use innerHTML setting only once or check in show? 
-        // Better to build structure then update text.
-        // For simplicity, let's rebuild on show or just simple innerHTML in show.
+    buildUI() {
+        this.container.innerHTML = `
+            <div id="skin-balance" style="position:absolute; top:20px; right:20px; color:#FFD700; font-size:24px; font-weight:bold;"></div>
+            <h2 id="skin-title" style="color:white; font-family:Arial; margin-bottom:30px;">SKINS</h2>
+            <div id="skin-list" style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center; max-width: 80%;"></div>
+            <p id="skin-msg" style="color:white; margin-top:20px; font-style:italic; height:20px;"></p>
+            <button id="btn-close-skins" style="margin-top:20px; padding:10px 30px; border-radius:20px; border:none; background:#555; color:white; font-size:16px;">CLOSE</button>
+        `;
+
+        this.container.querySelector('#btn-close-skins').addEventListener('click', () => this.hide());
     }
 
     setRetentionSystem(rs) {
@@ -30,25 +36,21 @@ export class SkinScreen {
     }
 
     show() {
-        // Re-build UI on show to ensure latest language
         const TXT = (k) => LocalizationManager.get(k);
 
-        this.container.innerHTML = `
-            <div id="skin-balance" style="position:absolute; top:20px; right:20px; color:#FFD700; font-size:24px; font-weight:bold;"></div>
-            <h2 style="color:white; font-family:Arial; margin-bottom:30px;">${TXT('SKINS')}</h2>
-            <div id="skin-list" style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center; max-width: 80%;"></div>
-            <p id="skin-msg" style="color:white; margin-top:20px; font-style:italic; height:20px;"></p>
-            <button id="btn-close-skins" style="margin-top:20px; padding:10px 30px; border-radius:20px; border:none; background:#555; color:white; font-size:16px;">${TXT('CLOSE')}</button>
-        `;
+        // Update Static Texts
+        this.container.querySelector('#skin-title').innerText = TXT('SKINS');
+        this.container.querySelector('#btn-close-skins').innerText = TXT('CLOSE');
 
-        this.container.querySelector('#btn-close-skins').addEventListener('click', () => this.hide());
-
-        if (!this.container.parentElement) document.body.appendChild(this.container);
+        if (!this.container.parentElement && document.body) document.body.appendChild(this.container);
 
         this.container.style.display = 'flex';
+        this.updateBalance();
         this.renderList();
         this.analytics.track('skin_screen_opened');
+    }
 
+    updateBalance() {
         if (this.retentionSystem) {
             this.container.querySelector('#skin-balance').innerText = `💰 ${this.retentionSystem.getCoins()}`;
         }
@@ -119,9 +121,7 @@ export class SkinScreen {
             list.appendChild(el);
         });
 
-        if (this.retentionSystem) {
-            this.container.querySelector('#skin-balance').innerText = `💰 ${this.retentionSystem.getCoins()}`;
-        }
+        this.updateBalance();
     }
 
     async onSkinClick(skin) {
@@ -153,7 +153,12 @@ export class SkinScreen {
                         if (success) {
                             this.skinManager.applySkin(skin.id);
                             this.renderList();
+                            this.updateBalance();
                             this.showMessage(`${TXT('BOUGHT')} ${skin.name}!`);
+                            // Update HUD immediately
+                            if (window.gameInstance && window.gameInstance.hud) {
+                                window.gameInstance.hud.updateCoins(this.retentionSystem.getCoins());
+                            }
                         } else {
                             this.showMessage(TXT('NOT_ENOUGH_COINS'));
                         }

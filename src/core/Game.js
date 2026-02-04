@@ -104,6 +104,7 @@ export class Game {
         this.challengeMode = null;
 
         this.init();
+        window.gameInstance = this;
     }
 
     // ... init ...
@@ -140,6 +141,7 @@ export class Game {
     goToMenu() {
         this.stateMachine.setState(STATES.MENU);
 
+        // Ensure retention system is fresh
         if (this.mainMenu && this.mainMenu.updateCoins) {
             this.mainMenu.updateCoins(this.retentionSystem.getCoins());
         }

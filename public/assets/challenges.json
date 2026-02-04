@@ -2,8 +2,14 @@
     "challenges": [
         {
             "id": "perfect_10",
-            "name": "Perfect Precision",
-            "description": "Place 10 perfect blocks in a row",
+            "name": {
+                "EN": "Perfect Precision",
+                "TR": "Mükemmel Hassasiyet"
+            },
+            "description": {
+                "EN": "Place 10 perfect blocks in a row",
+                "TR": "Art arda 10 mükemmel blok yerleştir"
+            },
             "type": "perfect_streak",
             "target": 10,
             "reward": {
@@ -14,8 +20,14 @@
         },
         {
             "id": "time_attack",
-            "name": "Time Attack",
-            "description": "Reach score 30 in 60 seconds",
+            "name": {
+                "EN": "Time Attack",
+                "TR": "Zamana Karşı"
+            },
+            "description": {
+                "EN": "Reach score 30 in 60 seconds",
+                "TR": "60 saniyede 30 skora ulaş"
+            },
             "type": "timed",
             "timeLimit": 60,
             "target": 30,
@@ -27,8 +39,14 @@
         },
         {
             "id": "high_reach",
-            "name": "High Reach",
-            "description": "Reach height 50",
+            "name": {
+                "EN": "High Reach",
+                "TR": "Yüksek Kule"
+            },
+            "description": {
+                "EN": "Reach height 50",
+                "TR": "50 yüksekliğe ulaş"
+            },
             "type": "score",
             "target": 50,
             "reward": {

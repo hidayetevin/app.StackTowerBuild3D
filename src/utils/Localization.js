@@ -30,7 +30,22 @@ export const TEXTS = {
         NO_CHALLENGE: "No Challenge for Today :(",
         COMPLETED_MSG: "Challenge Completed!",
         TUTORIAL_TAP: "Tap to Drop",
-        BACK: "Back"
+        BACK: "Back",
+
+        // New Additions
+        OWNED: "Owned",
+        ACTIVE: "Active",
+        BUY_FOR: "Buy for", // e.g., "Buy for 50 Coins?"
+        TRIAL_AD: "Trial (Ad)",
+        SCORE_REQ: "Score >",
+        DAY_REQ: "Day:",
+        NOT_ENOUGH_COINS: "Not enough coins!",
+        BOUGHT: "Bought!",
+        WATCH_AD_CONFIRM: "Watch an Ad to unlock?",
+        TRIAL_CONFIRM: "Watch Ad to try this theme for this session?",
+        SESSION_APPLIED: "Theme applied for this session!",
+        ERROR_NO_COIN_SYS: "Error: No Coin System",
+        UNLOCK_VIA: "Unlock via:"
     },
     TR: {
         PLAY: "OYNA",
@@ -63,6 +78,21 @@ export const TEXTS = {
         NO_CHALLENGE: "Bugün için görev yok :(",
         COMPLETED_MSG: "Görev Tamamlandı!",
         TUTORIAL_TAP: "Bırakmak için Dokun",
-        BACK: "Geri"
+        BACK: "Geri",
+
+        // New Additions
+        OWNED: "Sahip",
+        ACTIVE: "Aktif",
+        BUY_FOR: "Satın al:", // e.g. "Satın al: 50 Coin?"
+        TRIAL_AD: "Deneme (Reklam)",
+        SCORE_REQ: "Skor >",
+        DAY_REQ: "Gün:",
+        NOT_ENOUGH_COINS: "Yetersiz Bakiye!",
+        BOUGHT: "Satın Alındı!",
+        WATCH_AD_CONFIRM: "Kilidi açmak için reklam izle?",
+        TRIAL_CONFIRM: "Bu oturumda denemek için reklam izle?",
+        SESSION_APPLIED: "Tema bu oturum için uygulandı!",
+        ERROR_NO_COIN_SYS: "Hata: Coin Sistemi Yok",
+        UNLOCK_VIA: "Kilit Yöntemi:"
     }
 };

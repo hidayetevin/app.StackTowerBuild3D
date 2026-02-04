@@ -1,4 +1,5 @@
 import AdsManager from '../monetization/AdsManager.js';
+import LocalizationManager from '../utils/LocalizationManager.js';
 
 export class ThemeScreen {
     constructor(themeManager, analytics) {
@@ -13,18 +14,6 @@ export class ThemeScreen {
             background: rgba(0,0,0,0.9); z-index: 1200; display: none;
             flex-direction: column; align-items: center; justify-content: center;
         `;
-        // Scrollable list container
-        this.container.innerHTML = `
-            <div id="theme-balance" style="position:absolute; top:20px; right:20px; color:#FFD700; font-size:24px; font-weight:bold;"></div>
-            <h2 style="color:white; font-family:Arial; margin-bottom:30px;">THEMES</h2>
-            <div id="theme-list" style="display:flex; flex-direction:column; gap:15px; width: 80%; max-height: 60%; overflow-y: auto;"></div>
-            <p id="theme-msg" style="color:white; margin-top:20px; font-style:italic; height:20px;"></p>
-            <button id="btn-close-themes" style="margin-top:20px; padding:10px 30px; border-radius:20px; border:none; background:#555; color:white; font-size:16px;">CLOSE</button>
-        `;
-
-        document.body.appendChild(this.container);
-
-        this.container.querySelector('#btn-close-themes').addEventListener('click', () => this.hide());
     }
 
     setRetentionSystem(rs) {
@@ -32,6 +21,20 @@ export class ThemeScreen {
     }
 
     show() {
+        const TXT = (k) => LocalizationManager.get(k);
+
+        this.container.innerHTML = `
+            <div id="theme-balance" style="position:absolute; top:20px; right:20px; color:#FFD700; font-size:24px; font-weight:bold;"></div>
+            <h2 style="color:white; font-family:Arial; margin-bottom:30px;">${TXT('THEMES')}</h2>
+            <div id="theme-list" style="display:flex; flex-direction:column; gap:15px; width: 80%; max-height: 60%; overflow-y: auto;"></div>
+            <p id="theme-msg" style="color:white; margin-top:20px; font-style:italic; height:20px;"></p>
+            <button id="btn-close-themes" style="margin-top:20px; padding:10px 30px; border-radius:20px; border:none; background:#555; color:white; font-size:16px;">${TXT('CLOSE')}</button>
+        `;
+
+        this.container.querySelector('#btn-close-themes').addEventListener('click', () => this.hide());
+
+        if (!this.container.parentElement) document.body.appendChild(this.container);
+
         this.container.style.display = 'flex';
         this.renderList();
         this.analytics.track('theme_screen_opened');
@@ -43,12 +46,14 @@ export class ThemeScreen {
 
     hide() {
         this.container.style.display = 'none';
-        this.container.querySelector('#theme-msg').innerText = '';
+        const msgEl = this.container.querySelector('#theme-msg');
+        if (msgEl) msgEl.innerText = '';
     }
 
     renderList() {
         const list = this.container.querySelector('#theme-list');
         list.innerHTML = '';
+        const TXT = (k) => LocalizationManager.get(k);
 
         const themes = this.themeManager.getThemes();
 
@@ -72,10 +77,10 @@ export class ThemeScreen {
 
             if (theme.unlocked) {
                 if (this.themeManager.currentThemeId === theme.id) {
-                    status.innerHTML = '✅ Active';
+                    status.innerHTML = `✅ ${TXT('ACTIVE')}`;
                     status.style.color = '#00FF00';
                 } else {
-                    status.innerHTML = 'Owned';
+                    status.innerHTML = TXT('OWNED');
                     status.style.color = '#AAA';
                 }
             } else {
@@ -83,10 +88,10 @@ export class ThemeScreen {
                     status.innerText = `💰 ${theme.unlockValue}`;
                     status.style.color = '#FFD700';
                 } else if (theme.unlockMethod === 'rewarded_trial') {
-                    status.innerHTML = 'Trial (Ad)';
+                    status.innerHTML = TXT('TRIAL_AD');
                     status.style.color = '#00FFFF';
                 } else if (theme.unlockMethod === 'score_threshold') {
-                    status.innerHTML = `Score > ${theme.unlockValue}`;
+                    status.innerHTML = `${TXT('SCORE_REQ')} ${theme.unlockValue}`;
                     status.style.color = '#FF8888';
                 } else {
                     status.innerHTML = '🔒';
@@ -106,36 +111,38 @@ export class ThemeScreen {
     }
 
     async onThemeClick(theme) {
+        const TXT = (k) => LocalizationManager.get(k);
+
         if (theme.unlocked) {
             this.themeManager.applyTheme(theme.id);
             this.renderList();
         } else {
             console.log("Locked theme clicked:", theme.name);
             if (theme.unlockMethod === 'coins') {
-                if (confirm(`Unlock ${theme.name} for ${theme.unlockValue} Coins?`)) {
+                if (confirm(`${TXT('BUY_FOR')} ${theme.unlockValue} Coins?`)) {
                     if (this.retentionSystem) {
                         const success = this.themeManager.unlockWithCoins(theme.id, this.retentionSystem);
                         if (success) {
                             this.themeManager.applyTheme(theme.id);
                             this.renderList();
-                            this.showMessage(`Unlocked ${theme.name}!`);
+                            this.showMessage(`${TXT('BOUGHT')} ${theme.name}!`);
                         } else {
-                            this.showMessage("Not enough coins!");
+                            this.showMessage(TXT('NOT_ENOUGH_COINS'));
                         }
                     }
                 }
             } else if (theme.unlockMethod === 'rewarded_trial') {
-                if (confirm("Watch Ad to try this theme for this session?")) {
+                if (confirm(TXT('TRIAL_CONFIRM'))) {
                     const success = await AdsManager.showRewarded('try_theme');
                     if (success) {
-                        this.themeManager.applyTheme(theme.id, true); // true = temporary
+                        this.themeManager.applyTheme(theme.id, true);
                         this.themeManager.markTrialUsed(theme.id);
-                        this.hide(); // Go back to game/menu to see it
-                        alert("Theme applied for this session!");
+                        this.hide();
+                        alert(TXT('SESSION_APPLIED'));
                     }
                 }
             } else {
-                this.showMessage(`Unlock via: ${theme.unlockMethod}`);
+                this.showMessage(`${TXT('UNLOCK_VIA')} ${theme.unlockMethod}`);
             }
         }
     }

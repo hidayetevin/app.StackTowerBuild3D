@@ -1,3 +1,5 @@
+import LocalizationManager from '../utils/LocalizationManager.js';
+
 export class ChallengeScreen {
     constructor(challengeManager, analytics, onStartCallback) {
         this.challengeManager = challengeManager;
@@ -12,6 +14,8 @@ export class ChallengeScreen {
             flex-direction: column; align-items: center; justify-content: center;
         `;
 
+        // Removed appendChild from constructor to allow simple show re-render or lazy append
+        // But for consistency let's append on body
         document.body.appendChild(this.container);
     }
 
@@ -27,19 +31,21 @@ export class ChallengeScreen {
     }
 
     render(challenge) {
+        const TXT = (k) => LocalizationManager.get(k);
+
         if (!challenge) {
-            this.container.innerHTML = `<h2 style="color:white;">No Challenge for Today :(</h2><button id="btn-close-chal" style="margin-top:20px;">Back</button>`;
+            this.container.innerHTML = `<h2 style="color:white;">${TXT('NO_CHALLENGE')}</h2><button id="btn-close-chal" style="margin-top:20px;">${TXT('BACK')}</button>`;
         } else {
             this.container.innerHTML = `
-                <h1 style="color:#FFD700; font-family:Arial; margin-bottom:10px;">DAILY CHALLENGE</h1>
+                <h1 style="color:#FFD700; font-family:Arial; margin-bottom:10px;">${TXT('DAILY_CHALLENGE')}</h1>
                 <div style="background:rgba(255,255,255,0.1); padding:30px; border-radius:20px; text-align:center; max-width:300px;">
-                    <h2 style="color:white; font-size:28px; margin:0 0 10px 0;">${challenge.name}</h2>
-                    <p style="color:#ddd; font-size:18px; margin-bottom:20px;">${challenge.description}</p>
+                    <h2 style="color:white; font-size:28px; margin:0 0 10px 0;">${challenge.name[LocalizationManager.getCurrentLang()] || challenge.name['EN']}</h2>
+                    <p style="color:#ddd; font-size:18px; margin-bottom:20px;">${challenge.description[LocalizationManager.getCurrentLang()] || challenge.description['EN']}</p>
                     
                     <div style="margin:20px 0; border:1px solid rgba(255,255,255,0.3); padding:10px; border-radius:10px;">
-                        <div style="color:#aaa; font-size:14px;">REWARD</div>
+                        <div style="color:#aaa; font-size:14px;">${TXT('REWARD')}</div>
                         <div style="color:white; font-size:20px; font-weight:bold;">
-                            ${challenge.reward.type === 'coins' ? '💰 ' + challenge.reward.amount : '🎁 ' + challenge.reward.id}
+                            ${challenge.reward.type === 'coins' ? '💰 ' + challenge.reward.amount : '🎁 ' + (challenge.reward.id || challenge.reward.name)}
                         </div>
                     </div>
                     
@@ -48,9 +54,9 @@ export class ChallengeScreen {
                         background:#FF4081; color:white; cursor:pointer; font-weight:bold;
                         box-shadow: 0 4px 15px rgba(255, 64, 129, 0.4);
                         transition: transform 0.2s;
-                    ">START</button>
+                    ">${TXT('START')}</button>
                 </div>
-                 <button id="btn-close-chal" style="margin-top:30px; background:none; border:none; color:#aaa; font-size:16px; cursor:pointer; text-decoration:underline;">Close</button>
+                 <button id="btn-close-chal" style="margin-top:30px; background:none; border:none; color:#aaa; font-size:16px; cursor:pointer; text-decoration:underline;">${TXT('CLOSE')}</button>
             `;
 
             this.container.querySelector('#btn-start-chal').onclick = () => {

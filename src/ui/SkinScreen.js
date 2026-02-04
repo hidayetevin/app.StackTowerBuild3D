@@ -1,10 +1,11 @@
 import AdsManager from '../monetization/AdsManager.js';
+import LocalizationManager from '../utils/LocalizationManager.js';
 
 export class SkinScreen {
     constructor(skinManager, analytics) {
         this.skinManager = skinManager;
         this.analytics = analytics;
-        this.retentionSystem = null; // To be injected
+        this.retentionSystem = null;
 
         this.container = document.createElement('div');
         this.container.id = 'skin-screen';
@@ -14,17 +15,14 @@ export class SkinScreen {
             flex-direction: column; align-items: center; justify-content: center;
         `;
 
-        this.container.innerHTML = `
-            <div id="skin-balance" style="position:absolute; top:20px; right:20px; color:#FFD700; font-size:24px; font-weight:bold;"></div>
-            <h2 style="color:white; font-family:Arial; margin-bottom:30px;">SKINS</h2>
-            <div id="skin-list" style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center; max-width: 80%;"></div>
-            <p id="skin-msg" style="color:white; margin-top:20px; font-style:italic; height:20px;"></p>
-            <button id="btn-close-skins" style="margin-top:20px; padding:10px 30px; border-radius:20px; border:none; background:#555; color:white; font-size:16px;">CLOSE</button>
-        `;
+        // this.render = this.render.bind(this); // helper to re-render easily if language changes? - REMOVED (undefined)
+    }
 
-        document.body.appendChild(this.container);
-
-        this.container.querySelector('#btn-close-skins').addEventListener('click', () => this.hide());
+    initUI() {
+        const TXT = (k) => LocalizationManager.get(k);
+        // We use innerHTML setting only once or check in show? 
+        // Better to build structure then update text.
+        // For simplicity, let's rebuild on show or just simple innerHTML in show.
     }
 
     setRetentionSystem(rs) {
@@ -32,6 +30,21 @@ export class SkinScreen {
     }
 
     show() {
+        // Re-build UI on show to ensure latest language
+        const TXT = (k) => LocalizationManager.get(k);
+
+        this.container.innerHTML = `
+            <div id="skin-balance" style="position:absolute; top:20px; right:20px; color:#FFD700; font-size:24px; font-weight:bold;"></div>
+            <h2 style="color:white; font-family:Arial; margin-bottom:30px;">${TXT('SKINS')}</h2>
+            <div id="skin-list" style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center; max-width: 80%;"></div>
+            <p id="skin-msg" style="color:white; margin-top:20px; font-style:italic; height:20px;"></p>
+            <button id="btn-close-skins" style="margin-top:20px; padding:10px 30px; border-radius:20px; border:none; background:#555; color:white; font-size:16px;">${TXT('CLOSE')}</button>
+        `;
+
+        this.container.querySelector('#btn-close-skins').addEventListener('click', () => this.hide());
+
+        if (!this.container.parentElement) document.body.appendChild(this.container);
+
         this.container.style.display = 'flex';
         this.renderList();
         this.analytics.track('skin_screen_opened');
@@ -43,12 +56,14 @@ export class SkinScreen {
 
     hide() {
         this.container.style.display = 'none';
-        this.container.querySelector('#skin-msg').innerText = '';
+        const msgEl = this.container.querySelector('#skin-msg');
+        if (msgEl) msgEl.innerText = '';
     }
 
     renderList() {
         const list = this.container.querySelector('#skin-list');
         list.innerHTML = '';
+        const TXT = (k) => LocalizationManager.get(k);
 
         const skins = this.skinManager.getSkins();
 
@@ -83,7 +98,7 @@ export class SkinScreen {
                 if (this.skinManager.currentSkinId === skin.id) {
                     infoDiv.innerHTML = `<span style="font-size:24px; color:white;">✓</span>`;
                 } else {
-                    infoDiv.innerHTML = `<span style="font-size:12px; color:aaa;">Owned</span>`;
+                    infoDiv.innerHTML = `<span style="font-size:12px; color:aaa;">${TXT('OWNED')}</span>`;
                 }
             } else {
                 if (skin.unlockMethod === 'coins') {
@@ -91,9 +106,9 @@ export class SkinScreen {
                 } else if (skin.unlockMethod === 'rewarded_ad') {
                     infoDiv.innerHTML = `<span style="font-size:20px;">▶️</span>`;
                 } else if (skin.unlockMethod === 'score_threshold') {
-                    infoDiv.innerHTML = `<span style="font-size:11px; color:#aaa;">Score: ${skin.unlockValue}</span>`;
+                    infoDiv.innerHTML = `<span style="font-size:11px; color:#aaa;">${TXT('SCORE_REQ')} ${skin.unlockValue}</span>`;
                 } else if (skin.unlockMethod === 'daily_login') {
-                    infoDiv.innerHTML = `<span style="font-size:11px; color:#aaa;">Day: ${skin.unlockValue}</span>`;
+                    infoDiv.innerHTML = `<span style="font-size:11px; color:#aaa;">${TXT('DAY_REQ')} ${skin.unlockValue}</span>`;
                 } else {
                     infoDiv.innerHTML = `<span style="font-size:16px;">🔒</span>`;
                 }
@@ -110,6 +125,8 @@ export class SkinScreen {
     }
 
     async onSkinClick(skin) {
+        const TXT = (k) => LocalizationManager.get(k);
+
         if (skin.unlocked) {
             this.skinManager.applySkin(skin.id);
             this.renderList();
@@ -118,34 +135,34 @@ export class SkinScreen {
             console.log("Locked skin clicked:", skin.name);
 
             if (skin.unlockMethod === 'rewarded_ad') {
-                if (confirm(`Watch an Ad to unlock ${skin.name}?`)) {
+                if (confirm(`${TXT('WATCH_AD_CONFIRM')} (${skin.name})`)) {
                     const success = await AdsManager.showRewarded('unlock_skin');
                     if (success) {
                         this.skinManager.unlockSkin(skin.id);
                         this.skinManager.applySkin(skin.id);
                         this.renderList();
-                        this.showMessage(`Unlocked ${skin.name}!`);
+                        this.showMessage(`${TXT('SKIN_UNLOCKED')} ${skin.name}!`);
                     } else {
-                        this.showMessage("Ad failed or cancelled.");
+                        this.showMessage(TXT('AD_FAILED'));
                     }
                 }
             } else if (skin.unlockMethod === 'coins') {
-                if (confirm(`Buy ${skin.name} for ${skin.unlockValue} Coins?`)) {
+                if (confirm(`${TXT('BUY_FOR')} ${skin.unlockValue} Coins?`)) {
                     if (this.retentionSystem) {
                         const success = this.skinManager.unlockWithCoins(skin.id, this.retentionSystem);
                         if (success) {
                             this.skinManager.applySkin(skin.id);
                             this.renderList();
-                            this.showMessage(`Bought ${skin.name}!`);
+                            this.showMessage(`${TXT('BOUGHT')} ${skin.name}!`);
                         } else {
-                            this.showMessage("Not enough coins!");
+                            this.showMessage(TXT('NOT_ENOUGH_COINS'));
                         }
                     } else {
-                        this.showMessage("Error: No Coin System");
+                        this.showMessage(TXT('ERROR_NO_COIN_SYS'));
                     }
                 }
             } else {
-                this.showMessage(`Unlock via: ${skin.unlockMethod} (Value: ${skin.unlockValue})`);
+                this.showMessage(`${TXT('UNLOCK_VIA')} ${skin.unlockMethod}`);
             }
         }
     }

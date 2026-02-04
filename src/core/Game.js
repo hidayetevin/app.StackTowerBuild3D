@@ -8,7 +8,7 @@ import { Scoring } from '../game/Scoring.js';
 import { Difficulty } from '../game/Difficulty.js';
 import { HUD } from '../ui/HUD.js';
 
-// Phase 2 Added Imports
+// Phase 2 & 4 Added Imports
 import { STATES, GAME_CONFIG } from '../utils/Constants.js';
 import { TutorialSystem } from '../systems/TutorialSystem.js';
 import { RetentionSystem } from '../systems/RetentionSystem.js';
@@ -19,10 +19,14 @@ import { GameOverScreen } from '../ui/GameOverScreen.js';
 import { SettingsMenu } from '../ui/SettingsMenu.js';
 import * as THREE from 'three';
 
+// Monetization & Analytics
+import AdsManager from '../monetization/AdsManager.js';
+import Analytics from '../analytics/Analytics.js';
+
 export class Game {
     constructor() {
         // Core Systems
-        this.errorHandler = new ErrorHandler(); // Init first to catch errors
+        this.errorHandler = new ErrorHandler();
 
         // Managers
         this.sceneManager = new SceneManager();
@@ -36,7 +40,7 @@ export class Game {
         this.scoring = new Scoring();
         this.difficulty = new Difficulty();
 
-        // New Systems
+        // Systems
         this.retentionSystem = new RetentionSystem();
         this.tutorialSystem = new TutorialSystem(this);
 
@@ -65,7 +69,11 @@ export class Game {
         this.init();
     }
 
-    init() {
+    async init() {
+        // Analytics & Ads Init
+        await Analytics.init();
+        await AdsManager.init();
+
         // Setup Renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -93,11 +101,15 @@ export class Game {
         this.stateMachine.setState(STATES.MENU);
         this.mainMenu.show();
         this.gameOverScreen.hide();
-        this.hud.showGameUI(); // Hide HUD elements actually, HUD logic might need tweaks or we just hide score in menu
-        this.hud.container.style.display = 'none'; // quick hide
+        AdsManager.showBanner(); // Show Banner in Menu
+
+        this.hud.showGameUI();
+        this.hud.container.style.display = 'none';
     }
 
     checkTutorialAndStart() {
+        AdsManager.hideBanner(); // Hide Banner in Game
+
         this.mainMenu.hide();
         this.gameOverScreen.hide();
         this.hud.container.style.display = 'block';
@@ -115,7 +127,8 @@ export class Game {
         this.resetGameLogic();
         this.tutorialSystem.start();
 
-        // Spawn first block
+        Analytics.track('tutorial_begin');
+
         this.tower.spawnNextBlock(this.difficulty.getSpeed() * this.speedMultiplier);
     }
 
@@ -123,7 +136,8 @@ export class Game {
         this.stateMachine.setState(STATES.PLAYING);
         this.resetGameLogic();
 
-        // Spawn first block
+        Analytics.track('game_start');
+
         this.tower.spawnNextBlock(this.difficulty.getSpeed() * this.speedMultiplier);
     }
 
@@ -142,8 +156,6 @@ export class Game {
             // Managed by buttons
         } else if (state === STATES.PLAYING || state === STATES.TUTORIAL) {
             this.placeBlock();
-        } else if (state === STATES.GAMEOVER) {
-            // Managed by buttons
         }
     }
 
@@ -151,23 +163,23 @@ export class Game {
         const result = this.tower.placeCurrentBlock();
 
         if (!result.success) {
-            if (this.stateMachine.getState() === STATES.TUTORIAL) {
-                // Tutorial fail? Let's just retry or ignore fail for FTUE kindness?
-                // For now standard fail, but user can retry.
-                this.gameOver();
-            } else {
-                this.gameOver();
-            }
+            this.gameOver();
         } else {
             // Success
             this.scoring.addPoint();
+            const currentScore = this.scoring.getScore();
+            const combo = this.scoring.getCombo();
+
             if (result.result.isPerfect) {
                 this.scoring.registerPerfectHit();
+                Analytics.track('perfect_hit', { score: currentScore, combo: combo });
             } else {
                 this.scoring.resetCombo();
             }
 
-            this.hud.updateScore(this.scoring.getScore());
+            Analytics.track('block_placed', { score: currentScore, is_perfect: result.result.isPerfect });
+
+            this.hud.updateScore(currentScore);
             this.difficulty.increaseXY();
 
             // Track Mission Progress
@@ -175,22 +187,20 @@ export class Game {
             if (result.result.isPerfect) {
                 this.retentionSystem.updateMissionProgress('perfect_hits', 1);
             }
-            if (this.scoring.getScore() > 50) { // Just simpler check than delta
-                this.retentionSystem.updateMissionProgress('high_score', this.scoring.getScore()); // Logic might need refinement but fine for now
+            if (currentScore > 50) {
+                this.retentionSystem.updateMissionProgress('high_score', currentScore);
             }
 
             // Tutorial Hook
             if (this.stateMachine.getState() === STATES.TUTORIAL) {
                 this.tutorialSystem.onBlockPlaced(result.result);
                 if (this.tutorialSystem.currentState === this.tutorialSystem.states.COMPLETED) {
-                    this.stateMachine.setState(STATES.PLAYING); // Transition to normal play seamlessly
+                    this.stateMachine.setState(STATES.PLAYING);
                 }
             }
 
-            // Camera
+            // Camera & Next Block
             this.cameraController.update(this.tower.getHeight());
-
-            // Next Block
             this.tower.spawnNextBlock(this.difficulty.getSpeed() * this.speedMultiplier);
         }
     }
@@ -198,8 +208,35 @@ export class Game {
     gameOver() {
         this.stateMachine.setState(STATES.GAMEOVER);
         this.hud.container.style.display = 'none';
+
+        Analytics.track('game_over', {
+            score: this.scoring.getScore(),
+            max_combo: this.scoring.getCombo()
+        });
+
+        // Show Interstitial (Logic inside AdsManager)
+        AdsManager.showInterstitial();
+
         this.gameOverScreen.setScore(this.scoring.getScore());
         this.gameOverScreen.show();
+    }
+
+    // Reward methods called by RewardSystem
+    continueGame() {
+        // Simple continue: remove top block (failed one) or just restart from current height?
+        // Since we dropped the block, we can just spawn a new one.
+        // We need to restore state to PLAYING.
+        this.stateMachine.setState(STATES.PLAYING);
+        this.gameOverScreen.hide();
+        this.hud.container.style.display = 'block';
+
+        // Spawn next block at current height
+        this.tower.spawnNextBlock(this.difficulty.getSpeed() * this.speedMultiplier);
+    }
+
+    activateSlowMotion() {
+        this.setSpeedMultiplier(0.5);
+        setTimeout(() => this.setSpeedMultiplier(1.0), 5000); // 5 seconds slow mo
     }
 
     setSpeedMultiplier(multiplier) {
@@ -207,13 +244,8 @@ export class Game {
     }
 
     update(delta) {
-        // Update Game Logic
-        this.tower.update(delta * this.speedMultiplier); // Apply speed multiplier
-
-        // Update Camera
+        this.tower.update(delta * this.speedMultiplier);
         this.cameraController.update(this.tower.getHeight());
-
-        // Render
         this.renderer.render(this.sceneManager.scene, this.cameraController.camera);
     }
 

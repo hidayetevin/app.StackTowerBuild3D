@@ -1,23 +1,23 @@
 import { SaveSystem } from './SaveSystem.js';
+import Analytics from '../analytics/Analytics.js';
 
-// TutorialSystem.js
 export class TutorialSystem {
     constructor(game) {
-        this.game = game; // Reference to game to control speed etc.
+        this.game = game;
         this.saveSystem = new SaveSystem();
 
         this.states = {
             NOT_STARTED: 0,
-            STEP_1_TAP: 1,      // "Tap to drop block"
-            STEP_2_PERFECT: 2,  // "Align perfectly!"
-            STEP_3_COMBO: 3,    // "Build a combo!"
+            STEP_1_TAP: 1,
+            STEP_2_PERFECT: 2,
+            STEP_3_COMBO: 3,
             COMPLETED: 4
         };
 
         this.currentState = this.states.NOT_STARTED;
         this.skipTimer = 0;
-        this.showSkipAfter = 3.0; // 3 seconds
-        this.overlay = null; // Will be set by Game or injected
+        this.showSkipAfter = 3.0;
+        this.overlay = null;
     }
 
     setOverlay(overlay) {
@@ -34,10 +34,8 @@ export class TutorialSystem {
         this.currentState = this.states.STEP_1_TAP;
         if (this.overlay) this.overlay.showHint("Tap to drop the block!");
 
-        // Assist mode: slow down game (we need to implement setTimeScale in Game or Difficulty)
-        // For now, assuming Game has a method or we access difficulty directly
         if (this.game.setSpeedMultiplier) {
-            this.game.setSpeedMultiplier(0.5); // Slower for tutorial
+            this.game.setSpeedMultiplier(0.5);
         }
     }
 
@@ -55,13 +53,11 @@ export class TutorialSystem {
                     this.currentState = this.states.STEP_3_COMBO;
                     if (this.overlay) this.overlay.showHint("Keep going for a combo!");
                 } else {
-                    if (this.overlay) this.overlay.showHint("Try to align perfectly!"); // Repeat hint
+                    if (this.overlay) this.overlay.showHint("Try to align perfectly!");
                 }
                 break;
 
             case this.states.STEP_3_COMBO:
-                // Check if we have a combo (requires access to Scoring)
-                // Assuming result passed from Game.js has combo info or we check Game.scoring
                 if (this.game.scoring && this.game.scoring.getCombo() >= 3) {
                     this.complete();
                 }
@@ -72,11 +68,11 @@ export class TutorialSystem {
     complete() {
         this.currentState = this.states.COMPLETED;
         this.saveSystem.set('tutorial_completed', true);
-        // Analytics.track('tutorial_complete');
+
+        Analytics.track('tutorial_complete');
 
         if (this.overlay) this.overlay.hide();
 
-        // Return to normal speed
         if (this.game.setSpeedMultiplier) {
             this.game.setSpeedMultiplier(1.0);
         }
@@ -84,6 +80,6 @@ export class TutorialSystem {
 
     skip() {
         this.complete();
-        // Analytics.track('tutorial_skipped', { step: this.currentState });
+        Analytics.track('tutorial_skipped', { step: this.currentState });
     }
 }

@@ -89,7 +89,37 @@ Dosyaları üret.
 
 ==============================================================================
 
-📌 PHASE 3: MONETIZATION + ANALYTICS (ÜÇÜNCÜ PROMPT)
+📌 PHASE 3 - VISUAL POLISH
+
+Oyun artık "Hyper-Casual" standartlarına uygun, çekici ve "Juicy" bir hale geldi.
+
+Görsel İyileştirmeler:
+
+Gradient Materials (
+src/game/Shaders.js
+):
+Bloklar artık düz renk değil, FragmentShader ile dikey gradient geçişli.
+Üst kısım daha parlak, alt kısım daha koyu, kenarlar belirgin.
+Metalik ve Smooth görünüm.
+Particle System (
+src/game/ParticleSystem.js
+):
+Her bloğu kestiğinde veya perfect attığında havai fişek gibi partiküller patlıyor.
+Çok basit bir fizik (yerçekimi + hız) ile düşüyorlar ve performans için kendi kendine yok oluyorlar.
+Rainbow Stack (
+src/game/Tower.js
+):
+Kule yükseldikçe blokların rengi HSL spectrumunda (Gökkuşağı) değişiyor.
+Perfect vuruşlarda beyaz parıltılı efektler çıkıyor.
+Dynamic Scene (
+src/core/SceneManager.js
+):
+Arka plan artık düz mavi değil, "Deep Space -> Sunset" gradient'i (CanvasTexture ile üretildi).
+Lokal ışıklandırma iyileştirildi, ekstra PointLight eklendi.
+
+==============================================================================
+
+📌 PHASE 4: MONETIZATION + ANALYTICS (ÜÇÜNCÜ PROMPT)
 
 Mükemmel! Tutorial ve retention çalışıyor. Şimdi monetization ve analytics ekleyelim.
 
@@ -145,7 +175,7 @@ Dosyaları üret ve entegre et.
 
 ==============================================================================
 
-📌 PHASE 4: AUDIO + POLISH (DÖRDÜNCÜ PROMPT)
+📌 PHASE 5: AUDIO + POLISH (DÖRDÜNCÜ PROMPT)
 
 Harika! Monetization ve analytics çalışıyor. Son rötuşları yapalım.
 
@@ -202,7 +232,7 @@ Tüm eksik dosyaları üret ve final version'u hazırla.
 
 ==============================================================================
 
-📌 PHASE 5 (OPSİYONEL): SKIN/THEME/CHALLENGE (BEŞİNCİ PROMPT)
+📌 PHASE 6 (OPSİYONEL): SKIN/THEME/CHALLENGE (BEŞİNCİ PROMPT)
 
 Oyun tamamlandı! Şimdi additional features eklemek istiyorum.
 

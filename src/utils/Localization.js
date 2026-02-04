@@ -48,7 +48,9 @@ export const TEXTS = {
         UNLOCK_VIA: "Unlock via:",
         VIBRATION: "Vibration",
         WATCH_AD_2X: "Watch 2x Win",
-        YOU_WON_COINS: "You won"
+        YOU_WON_COINS: "You won",
+        LEADERBOARD: "Leaderboard",
+        SHARE_MSG: "I scored {score} in Stack Tower 3D! Can you beat me?"
     },
     TR: {
         PLAY: "OYNA",
@@ -99,6 +101,8 @@ export const TEXTS = {
         UNLOCK_VIA: "Kilit Yöntemi:",
         VIBRATION: "Titreşim",
         WATCH_AD_2X: "İzle 2x Kazan",
-        YOU_WON_COINS: "Kazandın"
+        YOU_WON_COINS: "Kazandın",
+        LEADERBOARD: "Sıralama",
+        SHARE_MSG: "Stack Tower 3D'de {score} puan yaptım! Beni geçebilir misin?"
     }
 };

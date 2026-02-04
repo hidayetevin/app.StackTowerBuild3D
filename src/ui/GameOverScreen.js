@@ -74,35 +74,72 @@ export class GameOverScreen {
         this.container.querySelector('#btn-retry').innerText = TXT('RETRY');
         this.container.querySelector('#btn-menu').innerText = TXT('MENU');
 
+        // Share Button Logic
+        const shareBtn = document.getElementById('btn-share') || document.createElement('button');
+        if (!shareBtn.id) {
+            shareBtn.id = 'btn-share';
+            shareBtn.style.cssText = "padding: 10px 30px; font-size: 16px; border: none; border-radius: 20px; background: #008CBA; color: white; cursor: pointer;";
+            this.container.querySelector('#btn-menu').parentNode.appendChild(shareBtn);
+
+            shareBtn.onclick = () => {
+                const msg = TXT('SHARE_MSG').replace('{score}', score);
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Stack Tower 3D',
+                        text: msg,
+                        url: window.location.href
+                    }).catch(console.error);
+                } else {
+                    navigator.clipboard.writeText(msg + ' ' + window.location.href);
+                    alert("Copied directly to clipboard!");
+                }
+            };
+        }
+        shareBtn.innerText = TXT('SHARE');
+
         const adBtn = this.container.querySelector('#btn-ad-2x');
         adBtn.innerText = `📺 ${TXT('WATCH_AD_2X')}`;
 
-        // Hide/Show Ad Button based on coins
-        // Even if 0 coins, we treat as 1 for multiplier potential (user requested "if 0 then treat as 1")
-        // But multiplying 0 is 0. User said "calculate as 1".
-        // Logic: if currentSessionCoins == 0, potential is 1 * 2 = 2? Or just give 2 coins?
-        // Let's assume user means: base is Math.max(1, sessionCoins). Reward is base * 2.
-        // Actually, "calculate as 1" likely means base amount to multiply is 1.
-
         const baseAmount = this.currentSessionCoins === 0 ? 1 : this.currentSessionCoins;
-
-        // If they have coins (or 0 treated as 1), show offer
         if (baseAmount > 0) {
             adBtn.style.display = 'block';
             this.container.querySelector('#coin-result').innerText = `+${this.currentSessionCoins} Coins`;
         } else {
-            adBtn.style.display = 'none'; // Should technically always be true if 0->1
+            adBtn.style.display = 'none';
         }
 
-        // High Score Logic
-        const best = localStorage.getItem('high_score') || 0;
+        // Leaderboard Logic (Local Top 5)
+        let topScores = JSON.parse(localStorage.getItem('top_scores') || "[]");
+        topScores.push({ score: score, date: new Date().toLocaleDateString() });
+        topScores.sort((a, b) => b.score - a.score);
+        topScores = topScores.slice(0, 5);
+        localStorage.setItem('top_scores', JSON.stringify(topScores));
+
+        let lbHtml = `<div style="margin-top:10px; text-align:center;">
+                        <h3 style="color:#FFA500; font-family:Arial; margin:5px;">${TXT('LEADERBOARD')}</h3>
+                        <ul style="list-style:none; padding:0; color:#ddd; font-family:Arial; font-size:14px;">`;
+        topScores.forEach((s, i) => {
+            const color = s.score === score && i < 5 ? '#00FF00' : '#ddd'; // Highlight current run
+            lbHtml += `<li style="color:${color}; padding:2px;">${i + 1}. ${s.score}</li>`;
+        });
+        lbHtml += `</ul></div>`;
+
+        let lbContainer = document.getElementById('lb-container');
+        if (!lbContainer) {
+            lbContainer = document.createElement('div');
+            lbContainer.id = 'lb-container';
+            this.container.querySelector('#high-score').insertAdjacentElement('afterend', lbContainer);
+        }
+        lbContainer.innerHTML = lbHtml;
+
+        // Best High Score Display
+        const best = topScores[0].score;
         const highScoreEl = this.container.querySelector('#high-score');
-        if (score > best) {
-            localStorage.setItem('high_score', score);
+        if (score >= best) {
             highScoreEl.innerText = `New ${TXT('BEST')}: ${score}!`;
             highScoreEl.style.color = '#00ff00';
         } else {
-            highScoreEl.innerText = `${TXT('BEST')}: ${Math.max(score, best)}`;
+            highScoreEl.innerText = `${TXT('BEST')}: ${best}`;
             highScoreEl.style.color = '#FFD700';
         }
     }

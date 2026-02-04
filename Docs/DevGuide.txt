@@ -1,0 +1,247 @@
+📌 PHASE 1: CORE GAMEPLAY (İLK PROMPT)
+
+Sen deneyimli bir senior mobile game developer'sın. Three.js ve Capacitor konusunda uzmansın.
+
+Stack Tower Build 3D isimli bir hyper-casual mobile oyunu geliştireceğiz.
+
+GÖREV: PHASE 1 - CORE GAMEPLAY
+
+Önce "Stack_Tower_Build_3D_FULL_AI_PROMPT_UPDATED.md" dosyasındaki şu bölümleri oku:
+- Bölüm 0 (AI Rol Tanımı)
+- Bölüm 1 (Teknoloji & Araçlar)
+- Bölüm 2 (Proje Kurulumu)
+- Bölüm 3 (Sahne & Kamera)
+- Bölüm 4 (Oyun Mekaniği - Core)
+
+YAPILACAKLAR:
+1. Dosya yapısını oluştur (sadece core/ ve game/ klasörleri)
+2. core/ klasöründeki TÜM dosyaları üret:
+   - Game.js
+   - SceneManager.js
+   - CameraController.js
+   - GameLoop.js
+   - InputManager.js
+   - StateMachine.js
+
+3. game/ klasöründeki TÜM dosyaları üret:
+   - Block.js
+   - Tower.js
+   - Collision.js
+   - Scoring.js
+   - Difficulty.js
+
+4. Basit bir main.js (entry point)
+5. Minimal UI (sadece score gösterimi için basit bir HUD.js)
+
+ÖNEMLİ:
+- Bu aşamada Tutorial, Retention, Ads, Analytics YOK
+- Sadece oyun mekaniği çalışsın
+- Her dosyada detaylı yorumlar
+- Modüler, clean code
+- AABB collision manuel hesaplansın
+- Object pooling kullan (Tower.js'de)
+
+Hemen başla. İlk olarak dosya yapısını göster, sonra sırayla dosyaları üret.
+
+==============================================================================
+
+📌 PHASE 2: TUTORIAL + RETENTION (İKİNCİ PROMPT)
+
+Harika! Core gameplay çalışıyor. Şimdi tutorial ve retention sistemlerini ekleyelim.
+
+GÖREV: PHASE 2 - TUTORIAL & RETENTION
+
+"Stack_Tower_Build_3D_FULL_AI_PROMPT_UPDATED.md" dosyasından şu bölümleri oku:
+- Bölüm 5 (Tutorial System)
+- Bölüm 6 (Retention Mechanics)
+- Bölüm 9 (Error Handling)
+
+YAPILACAKLAR:
+1. systems/ klasörünü ekle ve şu dosyaları üret:
+   - TutorialSystem.js (3-step FTUE, skippable)
+   - RetentionSystem.js (daily login, missions, streak)
+   - SaveSystem.js (localStorage + memory fallback)
+   - ErrorHandler.js (global error catching)
+
+2. ui/ klasörüne şunları ekle:
+   - TutorialOverlay.js (tutorial hints)
+   - MainMenu.js (Play, Themes, Skins, Settings)
+   - GameOverScreen.js (Retry, Share)
+   - SettingsMenu.js (Sound, Music, Privacy Policy link)
+
+3. Ana oyun akışına entegre et:
+   - Game.js'e StateMachine'e TUTORIAL state'i ekle
+   - İlk açılışta tutorial kontrolü yap
+   - Daily login kontrolü ekle
+   - Mission progress tracking ekle
+
+4. utils/ klasörü ekle:
+   - Constants.js (game constants, performance budget)
+   - MathUtils.js (lerp, clamp, random)
+
+ÖNEMLİ:
+- Tutorial skippable olmalı (3 saniye sonra skip butonu)
+- Offline modda çalışmalı
+- Storage fail olsa bile oyun kırılmamalı
+- Error handling her yerde olmalı
+
+Dosyaları üret.
+
+==============================================================================
+
+📌 PHASE 3: MONETIZATION + ANALYTICS (ÜÇÜNCÜ PROMPT)
+
+Mükemmel! Tutorial ve retention çalışıyor. Şimdi monetization ve analytics ekleyelim.
+
+GÖREV: PHASE 3 - MONETIZATION & ANALYTICS
+
+"Stack_Tower_Build_3D_v3_Monetization.md" dosyasının TAMAMINI oku.
+
+Ayrıca "Stack_Tower_Build_3D_FULL_AI_PROMPT_UPDATED.md" dosyasından:
+- Bölüm 7 (AdMob Integration)
+- Bölüm 8 (Analytics - Firebase)
+
+YAPILACAKLAR:
+1. monetization/ klasörünü ekle:
+   - AdsManager.js (AdMob: banner, interstitial, rewarded)
+   - RewardSystem.js (reward dağıtımı)
+
+2. analytics/ klasörünü ekle:
+   - Analytics.js (Firebase Analytics wrapper)
+
+3. AdsManager özellikleri:
+   - Banner (main menu)
+   - Interstitial (her 3. game over, 30s cooldown)
+   - Rewarded (continue, double score, bonuses)
+   - ZORUNLU: Ad fail olursa oyun devam etmeli
+   - ZORUNLU: Offline modda reward yine de verilmeli
+
+4. Analytics event'leri ekle:
+   - Tutorial events (begin, complete, skipped)
+   - Gameplay events (game_start, game_over, block_placed, perfect_hit)
+   - Monetization events (ad_impression, rewarded_ad_watched)
+   - Retention events (daily_login, mission_completed)
+   - Error events (error_occurred, performance_warning)
+
+5. İlgili dosyalara event tracking ekle:
+   - TutorialSystem.js → tutorial_complete
+   - Game.js → game_start, game_over
+   - Block.js → block_placed, perfect_hit
+   - RetentionSystem.js → daily_login
+   - AdsManager.js → ad_impression, rewarded_ad_watched
+
+6. package.json'a dependencies ekle:
+   - admob-plus-capacitor
+   - @capacitor-firebase/analytics
+   - @capacitor/haptics
+
+ÖNEMLİ:
+- Ads MUST NOT break the game
+- Offline support zorunlu
+- Event queue sistem (offline için)
+- Test ad IDs kullan (production'da değiştirilecek)
+
+Dosyaları üret ve entegre et.
+
+==============================================================================
+
+📌 PHASE 4: AUDIO + POLISH (DÖRDÜNCÜ PROMPT)
+
+Harika! Monetization ve analytics çalışıyor. Son rötuşları yapalım.
+
+GÖREV: PHASE 4 - AUDIO & POLISH
+
+"Stack_Tower_Build_3D_FULL_AI_PROMPT_UPDATED.md" dosyasından:
+- Bölüm 11 (Audio Handling)
+- Bölüm 10 (Performance Budget)
+- Bölüm 13 (Build & Deployment)
+
+YAPILACAKLAR:
+1. audio/ klasörünü ekle:
+   - AudioManager.js (Web Audio API)
+   - Autoplay policy handling
+   - Mute/unmute toggle
+   - SFX: tap, perfect, combo, fail
+   - Music: ambient loop (OGG format)
+
+2. Performance optimization:
+   - utils/PerformanceMonitor.js ekle
+   - FPS tracking
+   - Low FPS durumunda performance mode
+   - Object pooling kontrolü
+
+3. UI polish:
+   - HUD.js'i geliştiir (score, combo, animations)
+   - GameOverScreen.js'e animasyonlar ekle
+   - Transition effects ekle
+   - Loading screen ekle
+
+4. Configuration files:
+   - README.md (setup, development, build instructions)
+   - package.json (tüm dependencies)
+   - capacitor.config.json (Capacitor config)
+   - .gitignore
+
+5. Privacy compliance:
+   - SettingsMenu.js'e Privacy Policy linki ekle (https://yoursite.com/privacy-policy)
+   - iOS ATT handling (AdMob.initialize içinde)
+
+6. Final touches:
+   - Tüm console.log'ları kontrol et
+   - Error handling'leri kontrol et
+   - Performance budget'a uygunluğu kontrol et
+   - Test checklist hazırla
+
+ÖNEMLİ:
+- Audio autoplay policy'ye uygun olmalı
+- FPS ≥ 45 olmalı
+- Bundle size < 4MB olmalı
+- Offline çalışmalı
+
+Tüm eksik dosyaları üret ve final version'u hazırla.
+
+==============================================================================
+
+📌 PHASE 5 (OPSİYONEL): SKIN/THEME/CHALLENGE (BEŞİNCİ PROMPT)
+
+Oyun tamamlandı! Şimdi additional features eklemek istiyorum.
+
+GÖREV: PHASE 5 - VARIATIONS (OPTIONAL)
+
+"Stack_Tower_Build_3D_Variations_UPDATED.md" dosyasının TAMAMINI oku.
+
+YAPILACAKLAR:
+1. Skin sistemi:
+   - game/SkinManager.js
+   - assets/skins.json
+   - UI: ui/SkinScreen.js
+   - Unlock methodları: score, rewarded ad, daily login, mission
+
+2. Theme sistemi:
+   - game/ThemeManager.js
+   - assets/themes.json
+   - UI: ui/ThemeScreen.js
+   - Trial sistemi (rewarded ad ile 5dk deneme)
+
+3. Challenge mode:
+   - game/ChallengeManager.js
+   - assets/challenges.json
+   - UI: ui/ChallengeScreen.js
+   - Günlük/haftalık challenge'lar
+   - Challenge türleri: perfect_streak, special_condition, timed
+
+4. Ana menüye entegrasyon:
+   - MainMenu.js'e Themes ve Skins butonları ekle
+   - Challenge butonu ekle
+
+5. Analytics events:
+   - skin_selected, skin_unlocked
+   - theme_selected, theme_trial_used
+   - challenge_start, challenge_complete
+
+JSON dosyalarını da üret (skins.json, themes.json, challenges.json).
+
+Tüm sistemi entegre et.
+
+==============================================================================
+

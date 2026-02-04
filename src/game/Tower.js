@@ -1,5 +1,6 @@
 import { Block } from './Block.js';
 import { Collision } from './Collision.js';
+import { ParticleSystem } from './ParticleSystem.js'; // Added
 import { GAME_CONFIG, PERFORMANCE } from '../utils/Constants.js';
 import * as THREE from 'three';
 
@@ -7,64 +8,67 @@ export class Tower {
     constructor(sceneManager) {
         this.sceneManager = sceneManager;
         this.blocks = [];
-        this.blockPool = []; // Object pooling
+        this.blockPool = [];
         this.baseSize = { x: GAME_CONFIG.INITIAL_BLOCK_SIZE, y: GAME_CONFIG.BLOCK_HEIGHT, z: GAME_CONFIG.INITIAL_BLOCK_SIZE };
-        this.lastPosition = { x: 0, y: 0, z: 0 };
+
+        // Visuals
+        this.particleSystem = new ParticleSystem(sceneManager);
+        this.hue = 0; // For rainbow colors
     }
 
     init() {
-        // Create base block (static)
         this.addBaseBlock();
     }
 
     reset() {
-        // Recycle all blocks
-        this.blocks.forEach(block => {
-            this.recycleBlock(block);
-        });
+        this.blocks.forEach(block => this.recycleBlock(block));
         this.blocks = [];
+        this.hue = 0;
         this.addBaseBlock();
     }
 
+    update(delta) {
+        const topBlock = this.getTopBlock();
+        if (topBlock && topBlock.state === 'MOVING') {
+            topBlock.update(delta);
+        }
+        this.particleSystem.update(delta); // Update particles
+    }
+
     addBaseBlock() {
-        // The first block at the bottom
         const baseBlock = new Block(
             this.baseSize,
             new THREE.Vector3(0, 0, 0),
-            'static', // No movement
-            GAME_CONFIG.COLORS.BLOCK_BASE
+            'static',
+            this.getRainbowColor()
         );
         baseBlock.stop();
         this.sceneManager.add(baseBlock.mesh);
         this.blocks.push(baseBlock);
+    }
 
-        this.lastPosition = { x: 0, y: 0, z: 0 };
+    getRainbowColor() {
+        const color = new THREE.Color().setHSL(this.hue, 0.7, 0.5);
+        this.hue += 0.05; // Increment hue for next block
+        if (this.hue > 1) this.hue -= 1;
+        return color.getHex();
     }
 
     spawnNextBlock(speed) {
         const prevBlock = this.getTopBlock();
         const yPos = prevBlock.mesh.position.y + GAME_CONFIG.BLOCK_HEIGHT;
-
-        // Alternate direction
         const direction = (this.blocks.length % 2 === 0) ? 'x' : 'z';
 
-        // Start position offset
         let startPos = new THREE.Vector3(prevBlock.mesh.position.x, yPos, prevBlock.mesh.position.z);
-        if (direction === 'x') {
-            startPos.x = -GAME_CONFIG.BLOCK_START_POS;
-        } else {
-            startPos.z = -GAME_CONFIG.BLOCK_START_POS;
-        }
+        if (direction === 'x') startPos.x = -GAME_CONFIG.BLOCK_START_POS;
+        else startPos.z = -GAME_CONFIG.BLOCK_START_POS;
 
-        // Get from pool or create new
         const newBlock = this.getBlockFromPool();
-
-        // Reset block state with current top block's size (because we might have sliced it)
         const currentSize = { ...prevBlock.size };
-        // Reset height to standard just in case
         currentSize.y = GAME_CONFIG.BLOCK_HEIGHT;
 
         newBlock.reset(currentSize, startPos, direction, speed);
+        newBlock.setColor(this.getRainbowColor()); // Apply new color
 
         this.sceneManager.add(newBlock.mesh);
         this.blocks.push(newBlock);
@@ -73,39 +77,43 @@ export class Tower {
     }
 
     placeCurrentBlock() {
-        if (this.blocks.length <= 1) return { success: true }; // Should not happen if game flow is correct
+        if (this.blocks.length <= 1) return { success: true };
 
         const currentBlock = this.blocks[this.blocks.length - 1];
         const prevBlock = this.blocks[this.blocks.length - 2];
 
         currentBlock.stop();
-
         const collisionResult = Collision.checkOverlap(currentBlock, prevBlock);
 
         if (collisionResult.hasMissed) {
-            // Game Over
             this.dropBlock(currentBlock);
             return { success: false, result: collisionResult };
         }
 
-        // Handle Overlap (Slice)
         if (collisionResult.isPerfect) {
-            // Perfect! Snap to previous position
             const axis = currentBlock.direction === 'x' ? 'x' : 'z';
             currentBlock.mesh.position[axis] = prevBlock.mesh.position[axis];
-            // Size remains same
+
+            // Visual: Perfect Effect
+            this.spawnPerfectEffect(currentBlock.mesh.position);
         } else {
-            // Slice logic
             this.sliceBlock(currentBlock, collisionResult);
         }
 
         return { success: true, result: collisionResult };
     }
 
+    spawnPerfectEffect(position) {
+        // Spawn white particles for perfect hit
+        this.particleSystem.spawnParticles(position, 0xffffff, 20);
+
+        // Flash effect (optional, implies simple light tween or similar)
+        // For MVP, particles are enough juice.
+    }
+
     sliceBlock(block, collision) {
         const { axis, newCenter, overlap } = collision;
 
-        // Update current block to the overlapped size
         const newSize = { ...block.size };
         newSize[axis] = overlap;
 
@@ -114,44 +122,21 @@ export class Tower {
 
         block.resize(newSize, newPos);
 
-        // Visual: Create falling part (the cutoff) using the debris
-        this.spawnDebris(block, collision);
-    }
-
-    spawnDebris(block, collision) {
-        // Phase 1: Minimal debris (optional, but good for visual debugging)
-        // Leaving empty/simple for now to save tokens, or add simple mesh
-        // For MVP, we skip debris physics for now as "Physics engine (manuel hesapla)" implies we shouldn't use Cannon.js etc.
-        // We can just ignore the falling part for this exact step to keep it speed.
+        // Spawn debris particles instead of physical chunk for performance
+        this.particleSystem.spawnParticles(block.mesh.position, block.material.uniforms.colorTop.value.getHex(), 5);
     }
 
     dropBlock(block) {
-        // Visual: make it fall (simple gravity animation could be handled by block update if state is FALLING)
-        // For now, just remove from scene or let it stay in air
+        // Just let it fall visually if we had physics
+        // For now, we spawn "fail" particles and remove it
+        this.particleSystem.spawnParticles(block.mesh.position, 0xff0000, 30);
     }
 
-    getTopBlock() {
-        return this.blocks[this.blocks.length - 1];
-    }
+    getTopBlock() { return this.blocks[this.blocks.length - 1]; }
+    getHeight() { return (this.blocks.length - 1) * GAME_CONFIG.BLOCK_HEIGHT; }
 
-    getHeight() {
-        return (this.blocks.length - 1) * GAME_CONFIG.BLOCK_HEIGHT;
-    }
-
-    update(delta) {
-        // Update the active moving block
-        const topBlock = this.getTopBlock();
-        if (topBlock && topBlock.state === 'MOVING') {
-            topBlock.update(delta);
-        }
-    }
-
-    // Pooling Logic
     getBlockFromPool() {
-        if (this.blockPool.length > 0) {
-            return this.blockPool.pop();
-        }
-        // Fallback: create new with placeholder values, will be reset immediately
+        if (this.blockPool.length > 0) return this.blockPool.pop();
         return new Block(this.baseSize, new THREE.Vector3(), 'x');
     }
 
@@ -160,7 +145,6 @@ export class Tower {
         if (this.blockPool.length < PERFORMANCE.MAX_ACTIVE_BLOCKS) {
             this.blockPool.push(block);
         } else {
-            // Clean up geometry/material
             block.geometry.dispose();
             block.material.dispose();
         }

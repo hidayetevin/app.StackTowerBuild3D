@@ -1,4 +1,10 @@
-import { STATES } from '../utils/Constants.js';
+export const STATES = {
+    MENU: 'MENU',
+    TUTORIAL: 'TUTORIAL', // Added Tutorial State
+    PLAYING: 'PLAYING',
+    GAMEOVER: 'GAMEOVER',
+    PAUSED: 'PAUSED'
+};
 
 export class StateMachine {
     constructor() {

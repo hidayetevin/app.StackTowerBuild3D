@@ -21,6 +21,7 @@ import AudioManager from '../audio/AudioManager.js';
 import * as THREE from 'three';
 import AdsManager from '../monetization/AdsManager.js';
 import Analytics from '../analytics/Analytics.js';
+import LocalizationManager from '../utils/LocalizationManager.js';
 
 // Phase 7 Stores
 import { SkinManager } from '../game/SkinManager.js';
@@ -97,7 +98,7 @@ export class Game {
         this.init();
     }
 
-    // ... init() same as before ... 
+    // ... init, goToMenu ... 
     async init() {
         await Analytics.init();
         await AdsManager.init();
@@ -115,7 +116,6 @@ export class Game {
         this.performanceMonitor = new PerformanceMonitor(this.renderer);
         window.addEventListener('resize', this.onResize.bind(this));
 
-        // Setup Loop (Note: GameLoop handles stop/start internally or we check state in update)
         this.gameLoop.add(this.update);
 
         this.goToMenu();
@@ -135,11 +135,8 @@ export class Game {
         this.themeScreen.hide();
         this.challengeScreen.hide();
         this.pauseMenu.hide();
-
         AdsManager.showBanner();
-
         this.hud.hideGameUI();
-
         this.challengeMode = null;
     }
 
@@ -147,7 +144,6 @@ export class Game {
         if (this.stateMachine.getState() === STATES.PLAYING) {
             this.stateMachine.setState(STATES.PAUSED);
             this.pauseMenu.show();
-            // Optional: Pause Music or loop but quieter?
         }
     }
 
@@ -173,7 +169,7 @@ export class Game {
         }
     }
 
-    // ... startChallenge, startTutorial same as before ... 
+    // ... startChallenge, startTutorial, startGame ...
     startChallenge(config) {
         this.challengeMode = config;
         AdsManager.hideBanner();
@@ -213,8 +209,7 @@ export class Game {
     onInput() {
         const state = this.stateMachine.getState();
         if (state === STATES.MENU || state === STATES.PAUSED) {
-            // UI handles it
-            // Important: Don't place block if paused!
+            // UI
         } else if (state === STATES.PLAYING || state === STATES.TUTORIAL) {
             AudioManager.resumeContext();
             this.placeBlock();
@@ -231,12 +226,18 @@ export class Game {
             this.scoring.addPoint();
             const currentScore = this.scoring.getScore();
             const combo = this.scoring.getCombo();
+            const percentage = result.result.percentage;
 
+            // FEEDBACK LOGIC
             if (result.result.isPerfect) {
                 this.scoring.registerPerfectHit();
                 AudioManager.playSound('perfect');
                 if (combo > 1) AudioManager.playSound('combo');
                 Analytics.track('perfect_hit', { score: currentScore, combo: combo });
+
+                // Show floating text
+                const perfectTexts = LocalizationManager.getCurrentLang() === 'TR' ? ["MÜKEMMEL!", "FISTIK GİBİ!"] : ["PERFECT!", "AWESOME!"];
+                this.hud.showFeedback(perfectTexts[0], '#00FF00');
 
                 if (this.challengeMode) {
                     this.checkChallengeProgress('perfect_hit', 1);
@@ -245,8 +246,26 @@ export class Game {
                 this.scoring.resetCombo();
                 AudioManager.playSound('tap');
 
-                if (this.challengeMode && this.challengeMode.type === 'perfect_streak') {
+                // Show percentage feedback
+                let color = '#FFFFFF';
+                let text = '';
+                const pct = Math.floor(percentage * 100);
+
+                if (pct >= 90) {
+                    text = LocalizationManager.getCurrentLang() === 'TR' ? `HARİKA!` : `GREAT!`;
+                    color = '#FFFF00';
+                } else if (pct >= 70) {
+                    text = LocalizationManager.getCurrentLang() === 'TR' ? `İYİ!` : `GOOD!`;
+                    color = '#FFA500';
+                } else if (pct >= 50) {
+                    text = LocalizationManager.getCurrentLang() === 'TR' ? `İDARE EDER!` : `OKAY!`;
+                    color = '#DDDDDD';
+                } else {
+                    text = `%${pct}`; // Just show simple pct for bad ones
+                    color = '#FF0000';
                 }
+
+                if (text) this.hud.showFeedback(text, color);
             }
 
             this.hud.updateScore(currentScore);
@@ -282,9 +301,9 @@ export class Game {
         }
     }
 
-    // ... checkChallengeProgress, gameOver, continueGame, setSpeedMultiplier ... 
     checkChallengeProgress(metric, value) {
         if (!this.challengeMode) return false;
+
         const completed = this.challengeManager.updateProgress(metric, value);
         if (completed) {
             alert(`Challenge Completed! Reward: ${JSON.stringify(this.challengeMode.options.reward)}`);
@@ -297,7 +316,7 @@ export class Game {
 
     gameOver() {
         this.stateMachine.setState(STATES.GAMEOVER);
-        this.hud.hideGameUI(); // Hide Pause btn too
+        this.hud.hideGameUI();
         Analytics.track('game_over', { score: this.scoring.getScore(), max_combo: this.scoring.getCombo() });
         AdsManager.showInterstitial();
         this.gameOverScreen.setScore(this.scoring.getScore());
@@ -314,15 +333,11 @@ export class Game {
     setSpeedMultiplier(multiplier) { this.speedMultiplier = multiplier; }
 
     update(delta) {
-        // ONLY update tower if PLAYING or TUTORIAL
         const state = this.stateMachine.getState();
         if (state === STATES.PLAYING || state === STATES.TUTORIAL) {
             this.tower.update(delta * this.speedMultiplier);
         }
-
-        // Camera can update in menu too if we want, but usually syncs with tower
         this.cameraController.update(this.tower.getHeight());
-
         this.renderer.render(this.sceneManager.scene, this.cameraController.camera);
         this.performanceMonitor.update(delta);
     }

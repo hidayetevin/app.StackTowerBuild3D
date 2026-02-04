@@ -6,10 +6,11 @@ export class HUD {
         this.container.style.top = '0';
         this.container.style.left = '0';
         this.container.style.width = '100%';
-        this.container.style.pointerEvents = 'none'; // Allow clicks to pass through generally
+        this.container.style.pointerEvents = 'none';
         this.container.style.fontFamily = 'Arial, sans-serif';
         this.container.style.zIndex = '500';
 
+        // Score
         this.scoreEl = document.createElement('div');
         this.scoreEl.style.position = 'absolute';
         this.scoreEl.style.top = '50px';
@@ -21,7 +22,7 @@ export class HUD {
         this.scoreEl.style.textShadow = '0 2px 10px rgba(0,0,0,0.3)';
         this.scoreEl.innerText = '0';
 
-        // Combo text
+        // Combo
         this.comboEl = document.createElement('div');
         this.comboEl.style.position = 'absolute';
         this.comboEl.style.top = '120px';
@@ -49,12 +50,9 @@ export class HUD {
         this.pauseBtn.style.fontSize = '20px';
         this.pauseBtn.style.fontWeight = 'bold';
         this.pauseBtn.style.cursor = 'pointer';
-        this.pauseBtn.style.pointerEvents = 'auto'; // Re-enable pointer events for button
+        this.pauseBtn.style.pointerEvents = 'auto';
         this.pauseBtn.style.backdropFilter = 'blur(4px)';
-
-        this.pauseBtn.onclick = () => {
-            if (this.onPauseClick) this.onPauseClick();
-        };
+        this.pauseBtn.onclick = () => { if (this.onPauseClick) this.onPauseClick(); };
 
         this.container.appendChild(this.scoreEl);
         this.container.appendChild(this.comboEl);
@@ -78,6 +76,33 @@ export class HUD {
         } else {
             this.comboEl.style.transform = 'translateX(-50%) scale(0)';
         }
+    }
+
+    showFeedback(text, color = '#FFFFFF') {
+        const el = document.createElement('div');
+        el.innerText = text;
+        el.style.position = 'absolute';
+        el.style.top = '170px'; // Below combo
+        el.style.left = '50%';
+        el.style.transform = 'translateX(-50%)';
+        el.style.fontSize = '24px';
+        el.style.fontWeight = 'bold';
+        el.style.color = color;
+        el.style.textShadow = '0 0 5px black';
+        el.style.opacity = '1';
+        el.style.transition = 'all 1s ease-out';
+
+        this.container.appendChild(el);
+
+        // Animate up and fade out
+        requestAnimationFrame(() => {
+            el.style.top = '100px';
+            el.style.opacity = '0';
+        });
+
+        setTimeout(() => {
+            el.remove();
+        }, 1000);
     }
 
     showGameUI() {

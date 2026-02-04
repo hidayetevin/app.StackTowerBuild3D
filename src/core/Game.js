@@ -29,6 +29,7 @@ import { ChallengeManager } from '../game/ChallengeManager.js';
 import { SkinScreen } from '../ui/SkinScreen.js';
 import { ThemeScreen } from '../ui/ThemeScreen.js';
 import { ChallengeScreen } from '../ui/ChallengeScreen.js';
+import { PauseMenu } from '../ui/PauseMenu.js';
 
 export class Game {
     constructor() {
@@ -51,13 +52,19 @@ export class Game {
         this.themeManager = new ThemeManager(this.retentionSystem.saveSystem, this.sceneManager);
         this.challengeManager = new ChallengeManager();
 
-        this.hud = new HUD();
+        this.hud = new HUD(() => this.pauseGame());
 
         // Screens
         this.skinScreen = new SkinScreen(this.skinManager, Analytics);
         this.themeScreen = new ThemeScreen(this.themeManager, Analytics);
         this.challengeScreen = new ChallengeScreen(this.challengeManager, Analytics, (challengeConfig) => {
             this.startChallenge(challengeConfig);
+        });
+
+        this.pauseMenu = new PauseMenu({
+            onResume: () => this.resumeGame(),
+            onRestart: () => this.checkTutorialAndStart(),
+            onMenu: () => this.goToMenu()
         });
 
         this.mainMenu = new MainMenu({
@@ -90,12 +97,12 @@ export class Game {
         this.init();
     }
 
+    // ... init() same as before ... 
     async init() {
         await Analytics.init();
         await AdsManager.init();
         await AudioManager.loadAll();
 
-        // Init managers
         await this.skinManager.loadSkins();
         await this.themeManager.loadThemes();
         await this.challengeManager.loadChallenges();
@@ -107,6 +114,8 @@ export class Game {
 
         this.performanceMonitor = new PerformanceMonitor(this.renderer);
         window.addEventListener('resize', this.onResize.bind(this));
+
+        // Setup Loop (Note: GameLoop handles stop/start internally or we check state in update)
         this.gameLoop.add(this.update);
 
         this.goToMenu();
@@ -125,20 +134,35 @@ export class Game {
         this.skinScreen.hide();
         this.themeScreen.hide();
         this.challengeScreen.hide();
+        this.pauseMenu.hide();
 
         AdsManager.showBanner();
 
-        this.hud.showGameUI();
-        this.hud.container.style.display = 'none';
+        this.hud.hideGameUI();
 
-        this.challengeMode = null; // Clear challenge
+        this.challengeMode = null;
+    }
+
+    pauseGame() {
+        if (this.stateMachine.getState() === STATES.PLAYING) {
+            this.stateMachine.setState(STATES.PAUSED);
+            this.pauseMenu.show();
+            // Optional: Pause Music or loop but quieter?
+        }
+    }
+
+    resumeGame() {
+        if (this.stateMachine.getState() === STATES.PAUSED) {
+            this.stateMachine.setState(STATES.PLAYING);
+            this.pauseMenu.hide();
+        }
     }
 
     checkTutorialAndStart() {
         AdsManager.hideBanner();
         this.mainMenu.hide();
         this.gameOverScreen.hide();
-        this.hud.container.style.display = 'block';
+        this.pauseMenu.hide();
         this.hud.showGameUI();
         AudioManager.playSound('tap');
 
@@ -149,12 +173,12 @@ export class Game {
         }
     }
 
+    // ... startChallenge, startTutorial same as before ... 
     startChallenge(config) {
         this.challengeMode = config;
         AdsManager.hideBanner();
         this.mainMenu.hide();
         this.challengeScreen.hide();
-        this.hud.container.style.display = 'block';
         this.hud.showGameUI();
 
         this.stateMachine.setState(STATES.PLAYING);
@@ -188,8 +212,9 @@ export class Game {
 
     onInput() {
         const state = this.stateMachine.getState();
-        if (state === STATES.MENU) {
-            // UI
+        if (state === STATES.MENU || state === STATES.PAUSED) {
+            // UI handles it
+            // Important: Don't place block if paused!
         } else if (state === STATES.PLAYING || state === STATES.TUTORIAL) {
             AudioManager.resumeContext();
             this.placeBlock();
@@ -213,7 +238,6 @@ export class Game {
                 if (combo > 1) AudioManager.playSound('combo');
                 Analytics.track('perfect_hit', { score: currentScore, combo: combo });
 
-                // Challenge Update
                 if (this.challengeMode) {
                     this.checkChallengeProgress('perfect_hit', 1);
                 }
@@ -222,7 +246,6 @@ export class Game {
                 AudioManager.playSound('tap');
 
                 if (this.challengeMode && this.challengeMode.type === 'perfect_streak') {
-                    // Check specific reset logic if needed
                 }
             }
 
@@ -230,10 +253,8 @@ export class Game {
             this.hud.updateCombo(this.scoring.getCombo());
             this.difficulty.increaseXY();
 
-            // Analytics
             Analytics.track('block_placed', { score: currentScore, is_perfect: result.result.isPerfect });
 
-            // Mission Progress
             this.retentionSystem.updateMissionProgress('blocks_placed', 1);
             if (result.result.isPerfect) {
                 this.retentionSystem.updateMissionProgress('perfect_hits', 1);
@@ -242,17 +263,13 @@ export class Game {
                 this.retentionSystem.updateMissionProgress('high_score', currentScore);
             }
 
-            // Challenge Progress (Score / Blocks)
             if (this.challengeMode) {
                 if (this.checkChallengeProgress('score', currentScore)) return;
             }
 
-            // AUTO UNLOCK CHECK (SKINS/THEMES)
             this.skinManager.checkAutoUnlock(currentScore);
             this.themeManager.checkAutoUnlock(currentScore);
 
-
-            // Tutorial Hook
             if (this.stateMachine.getState() === STATES.TUTORIAL) {
                 this.tutorialSystem.onBlockPlaced(result.result);
                 if (this.tutorialSystem.currentState === this.tutorialSystem.states.COMPLETED) {
@@ -265,12 +282,11 @@ export class Game {
         }
     }
 
+    // ... checkChallengeProgress, gameOver, continueGame, setSpeedMultiplier ... 
     checkChallengeProgress(metric, value) {
         if (!this.challengeMode) return false;
-
         const completed = this.challengeManager.updateProgress(metric, value);
         if (completed) {
-            // Challenge Won!
             alert(`Challenge Completed! Reward: ${JSON.stringify(this.challengeMode.options.reward)}`);
             this.challengeManager.stopChallenge();
             this.goToMenu();
@@ -281,7 +297,7 @@ export class Game {
 
     gameOver() {
         this.stateMachine.setState(STATES.GAMEOVER);
-        this.hud.container.style.display = 'none';
+        this.hud.hideGameUI(); // Hide Pause btn too
         Analytics.track('game_over', { score: this.scoring.getScore(), max_combo: this.scoring.getCombo() });
         AdsManager.showInterstitial();
         this.gameOverScreen.setScore(this.scoring.getScore());
@@ -291,15 +307,22 @@ export class Game {
     continueGame() {
         this.stateMachine.setState(STATES.PLAYING);
         this.gameOverScreen.hide();
-        this.hud.container.style.display = 'block';
+        this.hud.showGameUI();
         this.tower.spawnNextBlock(this.difficulty.getSpeed() * this.speedMultiplier);
     }
 
     setSpeedMultiplier(multiplier) { this.speedMultiplier = multiplier; }
 
     update(delta) {
-        this.tower.update(delta * this.speedMultiplier);
+        // ONLY update tower if PLAYING or TUTORIAL
+        const state = this.stateMachine.getState();
+        if (state === STATES.PLAYING || state === STATES.TUTORIAL) {
+            this.tower.update(delta * this.speedMultiplier);
+        }
+
+        // Camera can update in menu too if we want, but usually syncs with tower
         this.cameraController.update(this.tower.getHeight());
+
         this.renderer.render(this.sceneManager.scene, this.cameraController.camera);
         this.performanceMonitor.update(delta);
     }

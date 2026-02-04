@@ -1,0 +1,41 @@
+{
+    "challenges": [
+        {
+            "id": "perfect_10",
+            "name": "Perfect Precision",
+            "description": "Place 10 perfect blocks in a row",
+            "type": "perfect_streak",
+            "target": 10,
+            "reward": {
+                "type": "skin",
+                "id": "neon_blue"
+            },
+            "duration": "daily"
+        },
+        {
+            "id": "time_attack",
+            "name": "Time Attack",
+            "description": "Reach score 30 in 60 seconds",
+            "type": "timed",
+            "timeLimit": 60,
+            "target": 30,
+            "reward": {
+                "type": "coins",
+                "amount": 200
+            },
+            "duration": "daily"
+        },
+        {
+            "id": "high_reach",
+            "name": "High Reach",
+            "description": "Reach height 50",
+            "type": "score",
+            "target": 50,
+            "reward": {
+                "type": "bonus",
+                "name": "shield"
+            },
+            "duration": "daily"
+        }
+    ]
+}

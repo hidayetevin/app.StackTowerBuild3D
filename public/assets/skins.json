@@ -1,0 +1,44 @@
+{
+    "skins": [
+        {
+            "id": "default",
+            "name": "Classic",
+            "color": "#4CAF50",
+            "emissive": "#000000",
+            "unlockMethod": "default",
+            "unlockValue": 0
+        },
+        {
+            "id": "neon_blue",
+            "name": "Neon Blue",
+            "color": "#00FFFF",
+            "emissive": "#008888",
+            "unlockMethod": "score_threshold",
+            "unlockValue": 50
+        },
+        {
+            "id": "gold",
+            "name": "Golden",
+            "color": "#FFD700",
+            "emissive": "#AA8800",
+            "unlockMethod": "rewarded_ad",
+            "unlockValue": 0
+        },
+        {
+            "id": "daily_skin_1",
+            "name": "Rose Gold",
+            "color": "#FF1493",
+            "emissive": "#FF69B4",
+            "unlockMethod": "daily_login",
+            "unlockValue": 3
+        },
+        {
+            "id": "obsidian",
+            "name": "Obsidian",
+            "color": "#111111",
+            "emissive": "#555555",
+            "unlockMethod": "score_threshold",
+            "unlockValue": 150
+        }
+    ]
+}

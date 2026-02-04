@@ -1,6 +1,6 @@
 import { Block } from './Block.js';
 import { Collision } from './Collision.js';
-import { ParticleSystem } from './ParticleSystem.js'; // Added
+import { ParticleSystem } from './ParticleSystem.js';
 import { GAME_CONFIG, PERFORMANCE } from '../utils/Constants.js';
 import * as THREE from 'three';
 
@@ -13,7 +13,8 @@ export class Tower {
 
         // Visuals
         this.particleSystem = new ParticleSystem(sceneManager);
-        this.hue = 0; // For rainbow colors
+        this.hue = 0;
+        this.activeSkin = null;
     }
 
     init() {
@@ -27,12 +28,16 @@ export class Tower {
         this.addBaseBlock();
     }
 
+    setBlockStyle(skin) {
+        this.activeSkin = skin;
+    }
+
     update(delta) {
         const topBlock = this.getTopBlock();
         if (topBlock && topBlock.state === 'MOVING') {
             topBlock.update(delta);
         }
-        this.particleSystem.update(delta); // Update particles
+        this.particleSystem.update(delta);
     }
 
     addBaseBlock() {
@@ -40,16 +45,23 @@ export class Tower {
             this.baseSize,
             new THREE.Vector3(0, 0, 0),
             'static',
-            this.getRainbowColor()
+            this.determineBlockColor()
         );
         baseBlock.stop();
         this.sceneManager.add(baseBlock.mesh);
         this.blocks.push(baseBlock);
     }
 
+    determineBlockColor() {
+        if (this.activeSkin && this.activeSkin.id !== 'default') {
+            return this.activeSkin.color;
+        }
+        return this.getRainbowColor();
+    }
+
     getRainbowColor() {
         const color = new THREE.Color().setHSL(this.hue, 0.7, 0.5);
-        this.hue += 0.05; // Increment hue for next block
+        this.hue += 0.05;
         if (this.hue > 1) this.hue -= 1;
         return color.getHex();
     }
@@ -68,7 +80,14 @@ export class Tower {
         currentSize.y = GAME_CONFIG.BLOCK_HEIGHT;
 
         newBlock.reset(currentSize, startPos, direction, speed);
-        newBlock.setColor(this.getRainbowColor()); // Apply new color
+        newBlock.setColor(this.determineBlockColor());
+
+        // If we have advanced skin properties (emissive etc), apply them here
+        if (this.activeSkin && newBlock.material.uniforms) {
+            // NOTE: Our simple shader supports top/bottom color.
+            // Complex PBR properties from skin JSON would need ShaderMaterial update or StandardMaterial.
+            // For MVP + Variation Pack, we stick to color overrides.
+        }
 
         this.sceneManager.add(newBlock.mesh);
         this.blocks.push(newBlock);
@@ -93,8 +112,6 @@ export class Tower {
         if (collisionResult.isPerfect) {
             const axis = currentBlock.direction === 'x' ? 'x' : 'z';
             currentBlock.mesh.position[axis] = prevBlock.mesh.position[axis];
-
-            // Visual: Perfect Effect
             this.spawnPerfectEffect(currentBlock.mesh.position);
         } else {
             this.sliceBlock(currentBlock, collisionResult);
@@ -104,11 +121,7 @@ export class Tower {
     }
 
     spawnPerfectEffect(position) {
-        // Spawn white particles for perfect hit
         this.particleSystem.spawnParticles(position, 0xffffff, 20);
-
-        // Flash effect (optional, implies simple light tween or similar)
-        // For MVP, particles are enough juice.
     }
 
     sliceBlock(block, collision) {
@@ -122,13 +135,10 @@ export class Tower {
 
         block.resize(newSize, newPos);
 
-        // Spawn debris particles instead of physical chunk for performance
         this.particleSystem.spawnParticles(block.mesh.position, block.material.uniforms.colorTop.value.getHex(), 5);
     }
 
     dropBlock(block) {
-        // Just let it fall visually if we had physics
-        // For now, we spawn "fail" particles and remove it
         this.particleSystem.spawnParticles(block.mesh.position, 0xff0000, 30);
     }
 

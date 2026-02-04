@@ -1,0 +1,40 @@
+{
+    "themes": [
+        {
+            "id": "sky_world",
+            "name": "Sky World",
+            "background": {
+                "type": "gradient",
+                "topColor": "#87CEEB",
+                "bottomColor": "#E0F6FF"
+            },
+            "lightColor": "#FFFFFF",
+            "uiAccent": "#4A90E2",
+            "unlockMethod": "default"
+        },
+        {
+            "id": "neon_city",
+            "name": "Neon City",
+            "background": {
+                "type": "solid",
+                "color": "#1A0033"
+            },
+            "lightColor": "#FF00FF",
+            "uiAccent": "#FF00FF",
+            "unlockMethod": "rewarded_trial"
+        },
+        {
+            "id": "lava_core",
+            "name": "Lava Core",
+            "background": {
+                "type": "gradient",
+                "topColor": "#FF4500",
+                "bottomColor": "#8B0000"
+            },
+            "lightColor": "#FF6347",
+            "uiAccent": "#FF4500",
+            "unlockMethod": "score_threshold",
+            "unlockValue": 100
+        }
+    ]
+}

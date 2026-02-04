@@ -7,8 +7,6 @@ import { Tower } from '../game/Tower.js';
 import { Scoring } from '../game/Scoring.js';
 import { Difficulty } from '../game/Difficulty.js';
 import { HUD } from '../ui/HUD.js';
-
-// Phase 2, 4, 5 Added Imports
 import { STATES, GAME_CONFIG } from '../utils/Constants.js';
 import { TutorialSystem } from '../systems/TutorialSystem.js';
 import { RetentionSystem } from '../systems/RetentionSystem.js';
@@ -21,97 +19,102 @@ import { LoadingScreen } from '../ui/LoadingScreen.js';
 import { PerformanceMonitor } from '../utils/PerformanceMonitor.js';
 import AudioManager from '../audio/AudioManager.js';
 import * as THREE from 'three';
-
-// Monetization & Analytics
 import AdsManager from '../monetization/AdsManager.js';
 import Analytics from '../analytics/Analytics.js';
 
+// Phase 7 Stores
+import { SkinManager } from '../game/SkinManager.js';
+import { ThemeManager } from '../game/ThemeManager.js';
+import { ChallengeManager } from '../game/ChallengeManager.js';
+import { SkinScreen } from '../ui/SkinScreen.js';
+import { ThemeScreen } from '../ui/ThemeScreen.js';
+import { ChallengeScreen } from '../ui/ChallengeScreen.js';
+
 export class Game {
     constructor() {
-        // 1. Core Error Handling
         this.errorHandler = new ErrorHandler();
-
-        // 2. UI - Loading Screen First
         this.loadingScreen = new LoadingScreen();
-
-        // 3. Managers
         this.sceneManager = new SceneManager();
         this.cameraController = new CameraController();
         this.stateMachine = new StateMachine();
         this.gameLoop = new GameLoop();
         this.inputManager = new InputManager(this.onInput.bind(this));
 
-        // 4. Game Logic
         this.tower = new Tower(this.sceneManager);
         this.scoring = new Scoring();
         this.difficulty = new Difficulty();
-
-        // 5. Systems
         this.retentionSystem = new RetentionSystem();
         this.tutorialSystem = new TutorialSystem(this);
 
-        // 6. UI Components
+        // Phase 7 Managers
+        this.skinManager = new SkinManager(this.retentionSystem.saveSystem, this.tower);
+        this.themeManager = new ThemeManager(this.retentionSystem.saveSystem, this.sceneManager);
+        this.challengeManager = new ChallengeManager();
+
         this.hud = new HUD();
+
+        // Screens
+        this.skinScreen = new SkinScreen(this.skinManager, Analytics);
+        this.themeScreen = new ThemeScreen(this.themeManager, Analytics);
+        this.challengeScreen = new ChallengeScreen(this.challengeManager, Analytics, (challengeConfig) => {
+            this.startChallenge(challengeConfig);
+        });
+
         this.mainMenu = new MainMenu({
             onPlay: () => this.checkTutorialAndStart(),
-            onSettings: () => this.settingsMenu.show(AudioManager.isMuted, AudioManager.isMusicMuted)
+            onSettings: () => this.settingsMenu.show(AudioManager.isMuted, AudioManager.isMusicMuted),
+            onSkins: () => this.skinScreen.show(),
+            onThemes: () => this.themeScreen.show(),
+            onChallenge: () => this.challengeScreen.show()
         });
+
         this.gameOverScreen = new GameOverScreen({
             onRetry: () => this.checkTutorialAndStart(),
             onMenu: () => this.goToMenu()
         });
+
         this.settingsMenu = new SettingsMenu({
             onToggleSound: () => AudioManager.toggleMute(),
             onToggleMusic: () => AudioManager.toggleMusic(),
-            onClose: () => { /* maybe helpful later */ }
+            onClose: () => { }
         });
 
         this.tutorialOverlay = new TutorialOverlay(() => this.tutorialSystem.skip());
         this.tutorialSystem.setOverlay(this.tutorialOverlay);
 
-        // Bindings
         this.update = this.update.bind(this);
         this.speedMultiplier = 1.0;
 
-        // Init
+        this.challengeMode = null; // Store active challenge config
+
         this.init();
     }
 
     async init() {
-        // Analytics & Ads & Audio
         await Analytics.init();
         await AdsManager.init();
-        await AudioManager.loadAll(); // Preload sounds
+        await AudioManager.loadAll();
 
-        // Setup Renderer
+        // Init managers
+        await this.skinManager.loadSkins();
+        await this.themeManager.loadThemes();
+        await this.challengeManager.loadChallenges();
+
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(this.renderer.domElement);
 
-        // Performance Monitor
         this.performanceMonitor = new PerformanceMonitor(this.renderer);
-
-        // Setup Resizer
         window.addEventListener('resize', this.onResize.bind(this));
-
-        // Setup Loop
         this.gameLoop.add(this.update);
 
-        // Initialize Game State
         this.goToMenu();
         this.tower.init();
-
-        // Start Render Loop
         this.gameLoop.start();
 
-        // Check Daily Login
         this.retentionSystem.checkDailyLogin();
-
-        // Play Music
         AudioManager.playMusic();
-
-        // Hide Loader
         this.loadingScreen.hide();
     }
 
@@ -119,20 +122,24 @@ export class Game {
         this.stateMachine.setState(STATES.MENU);
         this.mainMenu.show();
         this.gameOverScreen.hide();
+        this.skinScreen.hide();
+        this.themeScreen.hide();
+        this.challengeScreen.hide();
+
         AdsManager.showBanner();
 
         this.hud.showGameUI();
         this.hud.container.style.display = 'none';
+
+        this.challengeMode = null; // Clear challenge
     }
 
     checkTutorialAndStart() {
         AdsManager.hideBanner();
-
         this.mainMenu.hide();
         this.gameOverScreen.hide();
         this.hud.container.style.display = 'block';
         this.hud.showGameUI();
-
         AudioManager.playSound('tap');
 
         if (!this.tutorialSystem.isCompleted()) {
@@ -140,6 +147,20 @@ export class Game {
         } else {
             this.startGame();
         }
+    }
+
+    startChallenge(config) {
+        this.challengeMode = config;
+        AdsManager.hideBanner();
+        this.mainMenu.hide();
+        this.challengeScreen.hide();
+        this.hud.container.style.display = 'block';
+        this.hud.showGameUI();
+
+        this.stateMachine.setState(STATES.PLAYING);
+        this.resetGameLogic();
+        Analytics.track('challenge_start', { type: config.type });
+        this.tower.spawnNextBlock(this.difficulty.getSpeed() * this.speedMultiplier);
     }
 
     startTutorial() {
@@ -167,26 +188,21 @@ export class Game {
 
     onInput() {
         const state = this.stateMachine.getState();
-
         if (state === STATES.MENU) {
-            // UI handles it
+            // UI
         } else if (state === STATES.PLAYING || state === STATES.TUTORIAL) {
-            AudioManager.resumeContext(); // Ensure audio context is unlocked
+            AudioManager.resumeContext();
             this.placeBlock();
         }
     }
 
     placeBlock() {
-        // Visual/Audio Feedback for Tap
-        // AudioManager.playSound('tap'); // Optional, maybe too noisy if every tap
-
         const result = this.tower.placeCurrentBlock();
 
         if (!result.success) {
             AudioManager.playSound('fail');
             this.gameOver();
         } else {
-            // Success
             this.scoring.addPoint();
             const currentScore = this.scoring.getScore();
             const combo = this.scoring.getCombo();
@@ -195,26 +211,46 @@ export class Game {
                 this.scoring.registerPerfectHit();
                 AudioManager.playSound('perfect');
                 if (combo > 1) AudioManager.playSound('combo');
-
                 Analytics.track('perfect_hit', { score: currentScore, combo: combo });
+
+                // Challenge Update
+                if (this.challengeMode) {
+                    this.checkChallengeProgress('perfect_hit', 1);
+                }
             } else {
                 this.scoring.resetCombo();
-                AudioManager.playSound('tap'); // Normal tap sound for non-perfect
-            }
+                AudioManager.playSound('tap');
 
-            Analytics.track('block_placed', { score: currentScore, is_perfect: result.result.isPerfect });
+                // Challenge Update: Reset streak if needed?
+                // For 'perfect_streak', a non-perfect hit breaks the streak in most games.
+                // Assuming challengeManager handles reset logic internally or we pass it.
+                // But simplified:
+                if (this.challengeMode && this.challengeMode.type === 'perfect_streak') {
+                    // Technically a miss of "perfect"
+                    // We might fail the challenge or just reset counter.
+                    // Let's reset counter for continuous play.
+                }
+            }
 
             this.hud.updateScore(currentScore);
             this.hud.updateCombo(this.scoring.getCombo());
             this.difficulty.increaseXY();
 
-            // Track Mission Progress
+            // Analytics
+            Analytics.track('block_placed', { score: currentScore, is_perfect: result.result.isPerfect });
+
+            // Mission Progress
             this.retentionSystem.updateMissionProgress('blocks_placed', 1);
             if (result.result.isPerfect) {
                 this.retentionSystem.updateMissionProgress('perfect_hits', 1);
             }
             if (currentScore > 50) {
                 this.retentionSystem.updateMissionProgress('high_score', currentScore);
+            }
+
+            // Challenge Progress (Score / Blocks)
+            if (this.challengeMode) {
+                if (this.checkChallengeProgress('score', currentScore)) return; // If completed, stop
             }
 
             // Tutorial Hook
@@ -225,23 +261,30 @@ export class Game {
                 }
             }
 
-            // Camera & Next Block
             this.cameraController.update(this.tower.getHeight());
             this.tower.spawnNextBlock(this.difficulty.getSpeed() * this.speedMultiplier);
         }
     }
 
+    checkChallengeProgress(metric, value) {
+        if (!this.challengeMode) return false;
+
+        const completed = this.challengeManager.updateProgress(metric, value);
+        if (completed) {
+            // Challenge Won!
+            alert(`Challenge Completed! Reward: ${JSON.stringify(this.challengeMode.options.reward)}`);
+            this.challengeManager.stopChallenge();
+            this.goToMenu();
+            return true;
+        }
+        return false;
+    }
+
     gameOver() {
         this.stateMachine.setState(STATES.GAMEOVER);
         this.hud.container.style.display = 'none';
-
-        Analytics.track('game_over', {
-            score: this.scoring.getScore(),
-            max_combo: this.scoring.getCombo()
-        });
-
+        Analytics.track('game_over', { score: this.scoring.getScore(), max_combo: this.scoring.getCombo() });
         AdsManager.showInterstitial();
-
         this.gameOverScreen.setScore(this.scoring.getScore());
         this.gameOverScreen.show();
     }
@@ -253,20 +296,12 @@ export class Game {
         this.tower.spawnNextBlock(this.difficulty.getSpeed() * this.speedMultiplier);
     }
 
-    activateSlowMotion() {
-        this.setSpeedMultiplier(0.5);
-        setTimeout(() => this.setSpeedMultiplier(1.0), 5000);
-    }
-
-    setSpeedMultiplier(multiplier) {
-        this.speedMultiplier = multiplier;
-    }
+    setSpeedMultiplier(multiplier) { this.speedMultiplier = multiplier; }
 
     update(delta) {
         this.tower.update(delta * this.speedMultiplier);
         this.cameraController.update(this.tower.getHeight());
         this.renderer.render(this.sceneManager.scene, this.cameraController.camera);
-
         this.performanceMonitor.update(delta);
     }
 

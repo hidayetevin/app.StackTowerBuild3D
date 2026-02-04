@@ -1,69 +1,65 @@
 export class HUD {
     constructor() {
-        // Create simple UI overlay
         this.container = document.createElement('div');
         this.container.style.position = 'absolute';
         this.container.style.top = '0';
         this.container.style.left = '0';
         this.container.style.width = '100%';
-        this.container.style.pointerEvents = 'none'; // click-through
+        this.container.style.pointerEvents = 'none';
         this.container.style.fontFamily = 'Arial, sans-serif';
-        this.container.style.color = 'white';
-        this.container.style.padding = '20px';
+        this.container.style.zIndex = '500';
 
         this.scoreEl = document.createElement('div');
-        this.scoreEl.style.fontSize = '48px';
+        this.scoreEl.style.position = 'absolute';
+        this.scoreEl.style.top = '50px';
+        this.scoreEl.style.left = '50%';
+        this.scoreEl.style.transform = 'translateX(-50%)';
+        this.scoreEl.style.fontSize = '64px';
         this.scoreEl.style.fontWeight = 'bold';
+        this.scoreEl.style.color = 'white';
+        this.scoreEl.style.textShadow = '0 2px 10px rgba(0,0,0,0.3)';
         this.scoreEl.innerText = '0';
 
-        this.startBtn = document.createElement('div');
-        this.startBtn.innerText = 'TAP TO START';
-        this.startBtn.style.position = 'absolute';
-        this.startBtn.style.top = '50%';
-        this.startBtn.style.left = '50%';
-        this.startBtn.style.transform = 'translate(-50%, -50%)';
-        this.startBtn.style.fontSize = '32px';
-        this.startBtn.style.pointerEvents = 'auto'; // Clickable
-        this.startBtn.style.cursor = 'pointer';
-
-        this.gameOverEl = document.createElement('div');
-        this.gameOverEl.style.display = 'none';
-        this.gameOverEl.style.position = 'absolute';
-        this.gameOverEl.style.top = '40%';
-        this.gameOverEl.style.left = '50%';
-        this.gameOverEl.style.transform = 'translate(-50%, -50%)';
-        this.gameOverEl.style.fontSize = '64px';
-        this.gameOverEl.style.color = '#ff4444';
-        this.gameOverEl.innerText = 'GAME OVER';
+        // Combo text
+        this.comboEl = document.createElement('div');
+        this.comboEl.style.position = 'absolute';
+        this.comboEl.style.top = '120px';
+        this.comboEl.style.left = '50%';
+        this.comboEl.style.transform = 'translateX(-50%) scale(0)'; // Start hidden
+        this.comboEl.style.fontSize = '32px';
+        this.comboEl.style.fontWeight = 'bold';
+        this.comboEl.style.color = '#FFD700'; // Gold
+        this.comboEl.style.textShadow = '0 0 10px orange';
+        this.comboEl.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        this.comboEl.innerText = '';
 
         this.container.appendChild(this.scoreEl);
-        this.container.appendChild(this.startBtn);
-        this.container.appendChild(this.gameOverEl);
+        this.container.appendChild(this.comboEl);
 
         document.body.appendChild(this.container);
     }
 
     updateScore(score) {
         this.scoreEl.innerText = score;
+        // Simple pulse animation
+        this.scoreEl.style.transform = 'translateX(-50%) scale(1.2)';
+        setTimeout(() => {
+            this.scoreEl.style.transform = 'translateX(-50%) scale(1.0)';
+        }, 100);
     }
 
-    showStartScreen() {
-        this.startBtn.style.display = 'block';
-        this.startBtn.innerText = 'TAP TO START';
-        this.gameOverEl.style.display = 'none';
-        this.scoreEl.style.display = 'none';
+    updateCombo(combo) {
+        if (combo > 1) {
+            this.comboEl.innerText = `COMBO x${combo}`;
+            this.comboEl.style.transform = 'translateX(-50%) scale(1.0)';
+        } else {
+            this.comboEl.style.transform = 'translateX(-50%) scale(0)';
+        }
     }
 
     showGameUI() {
-        this.startBtn.style.display = 'none';
-        this.gameOverEl.style.display = 'none';
-        this.scoreEl.style.display = 'block';
+        this.container.style.display = 'block';
         this.scoreEl.innerText = '0';
-    }
-
-    showGameOver() {
-        this.gameOverEl.style.display = 'block';
-        this.startBtn.style.display = 'block';
-        this.startBtn.innerText = 'TRY AGAIN';
+        this.updateCombo(0);
     }
 }

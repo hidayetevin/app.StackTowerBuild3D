@@ -1,5 +1,6 @@
 import { SaveSystem } from './SaveSystem.js';
 import Analytics from '../analytics/Analytics.js';
+import LocalizationManager from '../utils/LocalizationManager.js';
 
 export class TutorialSystem {
     constructor(game) {
@@ -28,11 +29,18 @@ export class TutorialSystem {
         return this.saveSystem.get('tutorial_completed', false);
     }
 
+    _T(key, fallback) {
+        // Simple helper to not break flow if key missing, but ideal is straight LocMan.get
+        const val = LocalizationManager.get(key);
+        return val === key ? fallback : val;
+    }
+
     start() {
         if (this.isCompleted()) return;
 
         this.currentState = this.states.STEP_1_TAP;
-        if (this.overlay) this.overlay.showHint("Tap to drop the block!");
+        // Use hardcoded fallback strings compatible with english if keys missing
+        if (this.overlay) this.overlay.showHint("Tap to drop!");
 
         if (this.game.setSpeedMultiplier) {
             this.game.setSpeedMultiplier(0.5);
@@ -45,15 +53,15 @@ export class TutorialSystem {
         switch (this.currentState) {
             case this.states.STEP_1_TAP:
                 this.currentState = this.states.STEP_2_PERFECT;
-                if (this.overlay) this.overlay.showHint("Try to align perfectly!");
+                if (this.overlay) this.overlay.showHint("Align perfectly!");
                 break;
 
             case this.states.STEP_2_PERFECT:
                 if (result.isPerfect) {
                     this.currentState = this.states.STEP_3_COMBO;
-                    if (this.overlay) this.overlay.showHint("Keep going for a combo!");
+                    if (this.overlay) this.overlay.showHint("Make combos!");
                 } else {
-                    if (this.overlay) this.overlay.showHint("Try to align perfectly!");
+                    if (this.overlay) this.overlay.showHint("Align perfectly!");
                 }
                 break;
 
@@ -68,11 +76,8 @@ export class TutorialSystem {
     complete() {
         this.currentState = this.states.COMPLETED;
         this.saveSystem.set('tutorial_completed', true);
-
         Analytics.track('tutorial_complete');
-
         if (this.overlay) this.overlay.hide();
-
         if (this.game.setSpeedMultiplier) {
             this.game.setSpeedMultiplier(1.0);
         }

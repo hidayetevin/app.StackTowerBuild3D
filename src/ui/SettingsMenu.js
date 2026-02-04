@@ -1,3 +1,5 @@
+import LocalizationManager from '../utils/LocalizationManager.js';
+
 export class SettingsMenu {
     constructor(callbacks) {
         this.callbacks = callbacks;
@@ -12,96 +14,84 @@ export class SettingsMenu {
         this.container.style.flexDirection = 'column';
         this.container.style.alignItems = 'center';
         this.container.style.justifyContent = 'center';
-        this.container.style.backgroundColor = 'rgba(255,255,255,0.95)';
+        this.container.style.backgroundColor = 'rgba(0,0,0,0.9)';
         this.container.style.zIndex = '1100';
 
-        this.container.innerHTML = `
-            <h2 style="color:#333; font-size:36px; font-family:Arial,sans-serif; margin-bottom: 40px;">Settings</h2>
-            
-            <div style="margin-bottom: 20px; display: flex; align-items: center; width: 250px; justify-content: space-between;">
-                <label style="font-family:Arial; font-size:20px;">Sound FX</label>
-                <div class="toggle-switch" id="toggle-sound" style="
-                    width: 50px; height: 26px; background: #ddd; border-radius: 13px; position: relative; cursor: pointer; transition: 0.3s;
-                ">
-                    <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 20px; display: flex; align-items: center; width: 250px; justify-content: space-between;">
-                <label style="font-family:Arial; font-size:20px;">Music</label>
-                 <div class="toggle-switch" id="toggle-music" style="
-                    width: 50px; height: 26px; background: #ddd; border-radius: 13px; position: relative; cursor: pointer; transition: 0.3s;
-                ">
-                    <div style="width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
-                </div>
-            </div>
-            
-            <a href="https://yoursite.com/privacy-policy" target="_blank" style="color: #2196F3; font-family: Arial; margin-bottom: 40px; text-decoration: none; border-bottom: 1px solid #2196F3;">Privacy Policy</a>
-            
-            <button id="btn-back" style="padding: 10px 40px; font-size: 18px; border: none; border-radius: 20px; background: #333; color: white; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">BACK</button>
-        `;
-
+        this.render();
         document.body.appendChild(this.container);
-
-        // Helpers for toggles
-        const updateToggle = (id, isActive) => {
-            const el = this.container.querySelector(id);
-            const knob = el.firstElementChild;
-            if (isActive) {
-                el.style.backgroundColor = '#4CAF50';
-                knob.style.left = '26px';
-            } else {
-                el.style.backgroundColor = '#ddd';
-                knob.style.left = '2px';
-            }
-        };
-
-        this.container.querySelector('#btn-back').addEventListener('click', () => this.hide());
-
-        this.container.querySelector('#toggle-sound').addEventListener('click', () => {
-            if (this.callbacks.onToggleSound) {
-                const newState = this.callbacks.onToggleSound();
-                updateToggle('#toggle-sound', !newState); // !muted = active
-            }
-        });
-
-        this.container.querySelector('#toggle-music').addEventListener('click', () => {
-            if (this.callbacks.onToggleMusic) {
-                const newState = this.callbacks.onToggleMusic();
-                updateToggle('#toggle-music', !newState);
-            }
-        });
-
-        // Initial State (Assumes onShow sets this, but defaults to Active)
-        updateToggle('#toggle-sound', true);
-        updateToggle('#toggle-music', true);
     }
 
-    show(soundMuted, musicMuted) {
-        this.container.style.display = 'flex';
+    render() {
+        const TXT = (k) => LocalizationManager.get(k);
+        const currentLang = LocalizationManager.getCurrentLang();
 
-        const soundActive = !soundMuted;
-        const musicActive = !musicMuted;
+        this.container.innerHTML = `
+            <h2 style="color: white; font-family: Arial; margin-bottom: 30px;">${TXT('SETTINGS')}</h2>
+            
+            <div style="display: flex; flex-direction: column; gap: 20px; width: 250px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; color: white; font-family: Arial;">
+                    <span>${TXT('SOUND')}</span>
+                    <button id="toggle-sound" style="padding: 5px 15px; border-radius: 15px; border: none; cursor: pointer; background: #4CAF50; color: white;">ON</button>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; color: white; font-family: Arial;">
+                    <span>${TXT('MUSIC')}</span>
+                    <button id="toggle-music" style="padding: 5px 15px; border-radius: 15px; border: none; cursor: pointer; background: #4CAF50; color: white;">ON</button>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; color: white; font-family: Arial;">
+                    <span>${TXT('LANGUAGE')}</span>
+                    <button id="toggle-lang" style="padding: 5px 15px; border-radius: 15px; border: none; cursor: pointer; background: #2196F3; color: white;">${currentLang}</button>
+                </div>
+                
+                <a href="https://yoursite.com/privacy" target="_blank" style="color: #aaa; text-align: center; font-family: Arial; font-size: 12px; margin-top: 20px;">${TXT('PRIVACY')}</a>
+                
+                <button id="btn-close-settings" style="margin-top: 20px; padding: 10px; border-radius: 20px; border: none; background: #555; color: white; cursor: pointer;">${TXT('CLOSE')}</button>
+            </div>
+        `;
 
-        // Update visuals manually
-        const updateToggle = (id, isActive) => {
-            const el = this.container.querySelector(id);
-            const knob = el.firstElementChild;
-            if (isActive) {
-                el.style.backgroundColor = '#4CAF50';
-                knob.style.left = '26px';
-            } else {
-                el.style.backgroundColor = '#ddd';
-                knob.style.left = '2px';
-            }
+        // Re-bind events after render
+        this.container.querySelector('#btn-close-settings').onclick = () => this.hide();
+
+        this.sndBtn = this.container.querySelector('#toggle-sound');
+        this.musBtn = this.container.querySelector('#toggle-music');
+        this.langBtn = this.container.querySelector('#toggle-lang');
+
+        this.sndBtn.onclick = () => {
+            const muted = this.callbacks.onToggleSound();
+            this.updateButtons(muted, null);
         };
 
-        updateToggle('#toggle-sound', soundActive);
-        updateToggle('#toggle-music', musicActive);
+        this.musBtn.onclick = () => {
+            const muted = this.callbacks.onToggleMusic();
+            this.updateButtons(null, muted);
+        };
+
+        this.langBtn.onclick = () => {
+            const newLang = currentLang === 'EN' ? 'TR' : 'EN';
+            LocalizationManager.setLanguage(newLang);
+            // Page will reload, no need to update switch manually
+        };
+    }
+
+    show(isMuted, isMusicMuted) {
+        this.updateButtons(isMuted, isMusicMuted);
+        this.container.style.display = 'flex';
     }
 
     hide() {
         this.container.style.display = 'none';
         if (this.callbacks.onClose) this.callbacks.onClose();
+    }
+
+    updateButtons(isSoundMuted, isMusicMuted) {
+        if (isSoundMuted !== null && isSoundMuted !== undefined) {
+            this.sndBtn.innerText = isSoundMuted ? 'OFF' : 'ON';
+            this.sndBtn.style.background = isSoundMuted ? '#f44336' : '#4CAF50';
+        }
+        if (isMusicMuted !== null && isMusicMuted !== undefined) {
+            this.musBtn.innerText = isMusicMuted ? 'OFF' : 'ON';
+            this.musBtn.style.background = isMusicMuted ? '#f44336' : '#4CAF50';
+        }
     }
 }

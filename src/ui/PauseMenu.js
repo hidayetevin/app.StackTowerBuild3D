@@ -1,3 +1,5 @@
+import LocalizationManager from '../utils/LocalizationManager.js';
+
 export class PauseMenu {
     constructor(callbacks) {
         this.callbacks = callbacks;
@@ -14,7 +16,14 @@ export class PauseMenu {
         this.container.style.justifyContent = 'center';
         this.container.style.backgroundColor = 'rgba(0,0,0,0.7)';
         this.container.style.backdropFilter = 'blur(5px)';
-        this.container.style.zIndex = '2000'; // High z-index to be on top
+        this.container.style.zIndex = '2000';
+
+        this.render();
+        document.body.appendChild(this.container);
+    }
+
+    render() {
+        const TXT = (k) => LocalizationManager.get(k);
 
         this.container.innerHTML = `
             <div style="
@@ -29,31 +38,28 @@ export class PauseMenu {
                 border: 2px solid rgba(255,255,255,0.1);
                 min-width: 250px;
             ">
-                <h1 style="color: white; font-family: Arial; margin: 0 0 10px 0;">PAUSED</h1>
+                <h1 style="color: white; font-family: Arial; margin: 0 0 10px 0;">${TXT('PAUSED')}</h1>
                 
                 <button id="btn-resume" style="
                     background: #4CAF50; color: white; border: none; padding: 12px 30px;
                     border-radius: 25px; font-size: 18px; cursor: pointer; width: 100%;
                     transition: transform 0.1s;
-                ">RESUME</button>
+                ">${TXT('RESUME')}</button>
                 
                 <button id="btn-restart" style="
                     background: #FF9800; color: white; border: none; padding: 12px 30px;
                     border-radius: 25px; font-size: 18px; cursor: pointer; width: 100%;
                     transition: transform 0.1s;
-                ">RESTART</button>
+                ">${TXT('RESTART')}</button>
                 
                 <button id="btn-menu" style="
                     background: #f44336; color: white; border: none; padding: 12px 30px;
                     border-radius: 25px; font-size: 18px; cursor: pointer; width: 100%;
                     transition: transform 0.1s;
-                ">MAIN MENU</button>
+                ">${TXT('MAIN_MENU')}</button>
             </div>
         `;
 
-        document.body.appendChild(this.container);
-
-        // Bind Events
         this.container.querySelector('#btn-resume').onclick = () => this.onResume();
         this.container.querySelector('#btn-restart').onclick = () => this.onRestart();
         this.container.querySelector('#btn-menu').onclick = () => this.onMenu();
@@ -63,20 +69,16 @@ export class PauseMenu {
         this.container.style.display = 'flex';
     }
 
-    hide() {
-        this.container.style.display = 'none';
-    }
-
+    // ... hide, onResume logic same as before ... 
+    hide() { this.container.style.display = 'none'; }
     onResume() {
         if (this.callbacks.onResume) this.callbacks.onResume();
         this.hide();
     }
-
     onRestart() {
         if (this.callbacks.onRestart) this.callbacks.onRestart();
-        this.hide(); // Hide first, then game logic handles reset
+        this.hide();
     }
-
     onMenu() {
         if (this.callbacks.onMenu) this.callbacks.onMenu();
         this.hide();

@@ -56,7 +56,7 @@ export class ChallengeScreen {
                         transition: transform 0.2s;
                     ">${TXT('START')}</button>
                 </div>
-                 <button id="btn-close-chal" style="margin-top:30px; background:none; border:none; color:#aaa; font-size:16px; cursor:pointer; text-decoration:underline;">${TXT('CLOSE')}</button>
+                 <button id="btn-close-chal" style="margin-top:30px; padding: 10px 30px; font-size: 16px; border: none; border-radius: 20px; background: #555; color: white; cursor: pointer;">${TXT('CLOSE')}</button>
             `;
 
             this.container.querySelector('#btn-start-chal').onclick = () => {

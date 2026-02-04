@@ -43,6 +43,20 @@ export class ThemeManager {
         return false;
     }
 
+    unlockWithCoins(themeId, retentionSystem) {
+        const theme = this.themes.find(t => t.id === themeId);
+        if (!theme || !theme.unlockMethod === 'coins') return false;
+
+        const cost = theme.unlockValue;
+        const currentCoins = retentionSystem.getCoins();
+
+        if (currentCoins >= cost) {
+            retentionSystem.addCoins(-cost);
+            return this.unlockTheme(themeId);
+        }
+        return false;
+    }
+
     markTrialUsed(themeId) {
         this.trialUsed[themeId] = true;
         this.saveSystem.set('theme_trial_used', this.trialUsed);

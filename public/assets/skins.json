@@ -13,7 +13,7 @@
             "name": "Neon Blue",
             "color": "#00FFFF",
             "emissive": "#008888",
-            "unlockMethod": "score_threshold",
+            "unlockMethod": "coins",
             "unlockValue": 50
         },
         {
@@ -37,8 +37,24 @@
             "name": "Obsidian",
             "color": "#111111",
             "emissive": "#555555",
+            "unlockMethod": "coins",
+            "unlockValue": 100
+        },
+        {
+            "id": "ruby",
+            "name": "Ruby Red",
+            "color": "#e0115f",
+            "emissive": "#ff0000",
+            "unlockMethod": "coins",
+            "unlockValue": 75
+        },
+        {
+            "id": "emerald",
+            "name": "Emerald",
+            "color": "#50c878",
+            "emissive": "#00ff00",
             "unlockMethod": "score_threshold",
-            "unlockValue": 150
+            "unlockValue": 250
         }
     ]
 }

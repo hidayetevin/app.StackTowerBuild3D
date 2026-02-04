@@ -21,7 +21,8 @@
             },
             "lightColor": "#FF00FF",
             "uiAccent": "#FF00FF",
-            "unlockMethod": "rewarded_trial"
+            "unlockMethod": "coins",
+            "unlockValue": 150
         },
         {
             "id": "lava_core",
@@ -35,6 +36,18 @@
             "uiAccent": "#FF4500",
             "unlockMethod": "score_threshold",
             "unlockValue": 100
+        },
+        {
+            "id": "midnight_run",
+            "name": "Midnight",
+            "background": {
+                "type": "solid",
+                "color": "#000000"
+            },
+            "lightColor": "#9999FF",
+            "uiAccent": "#5555FF",
+            "unlockMethod": "coins",
+            "unlockValue": 200
         }
     ]
 }

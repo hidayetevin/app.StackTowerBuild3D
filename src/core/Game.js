@@ -53,10 +53,14 @@ export class Game {
         this.challengeManager = new ChallengeManager();
 
         this.hud = new HUD(() => this.pauseGame());
-        this.hud.updateCoins(this.retentionSystem.getCoins());
 
         this.skinScreen = new SkinScreen(this.skinManager, Analytics);
+        // Inject RetentionSystem here to update Coin balance in real-time on UI
+        this.skinScreen.setRetentionSystem(this.retentionSystem);
+
         this.themeScreen = new ThemeScreen(this.themeManager, Analytics);
+        this.themeScreen.setRetentionSystem(this.retentionSystem);
+
         this.challengeScreen = new ChallengeScreen(this.challengeManager, Analytics, (challengeConfig) => {
             this.startChallenge(challengeConfig);
         });
@@ -129,7 +133,6 @@ export class Game {
     goToMenu() {
         this.stateMachine.setState(STATES.MENU);
 
-        // Refresh coins in main menu
         if (this.mainMenu && this.mainMenu.updateCoins) {
             this.mainMenu.updateCoins(this.retentionSystem.getCoins());
         }
@@ -258,8 +261,6 @@ export class Game {
                 // Adjust a bit upwards to account for block height roughly
                 this.hud.spawnFloatingCoin(screenPos.x - 15, screenPos.y - 50);
 
-                // Delay update HUD to sync with anim later or now? 
-                // Let's update text now, animation is separate eye candy
                 setTimeout(() => this.hud.updateCoins(newTotal), 800);
 
                 AudioManager.playSound('perfect');
@@ -295,7 +296,7 @@ export class Game {
                     text = LocalizationManager.getCurrentLang() === 'TR' ? `İDARE EDER!` : `OKAY!`;
                     color = '#DDDDDD';
                 } else {
-                    text = `%${pct}`;
+                    text = `%${pct}`; // Just show simple pct for bad ones
                     color = '#FF0000';
                 }
 

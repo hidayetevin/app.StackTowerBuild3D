@@ -36,11 +36,22 @@ export class SkinManager {
         if (!this.unlockedSkins.includes(skinId)) {
             this.unlockedSkins.push(skinId);
             this.saveSystem.set('unlocked_skins', this.unlockedSkins);
-
-            // Notify / Toast (Optional)
             console.log(`Unlocked skin: ${skinId}`);
-
             return true;
+        }
+        return false;
+    }
+
+    unlockWithCoins(skinId, retentionSystem) {
+        const skin = this.skins.find(s => s.id === skinId);
+        if (!skin || !skin.unlockMethod === 'coins') return false;
+
+        const cost = skin.unlockValue;
+        const currentCoins = retentionSystem.getCoins();
+
+        if (currentCoins >= cost) {
+            retentionSystem.addCoins(-cost); // Deduct coins
+            return this.unlockSkin(skinId);
         }
         return false;
     }
@@ -71,8 +82,6 @@ export class SkinManager {
                 this.unlockSkin(skin.id);
                 unlockedAny = true;
 
-                // Show simple toast or alert (Could remain silent or use game UI)
-                // For now, console log and hopefully UI toast if available
                 const event = new CustomEvent('skin-unlocked', { detail: { name: skin.name } });
                 window.dispatchEvent(event);
             }

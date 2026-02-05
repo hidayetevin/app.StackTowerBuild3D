@@ -160,7 +160,8 @@ export class Game {
     }
 
     pauseGame() {
-        if (this.stateMachine.getState() === STATES.PLAYING) {
+        const state = this.stateMachine.getState();
+        if (state === STATES.PLAYING || state === STATES.TUTORIAL) {
             this.stateMachine.setState(STATES.PAUSED);
             this.pauseMenu.show();
         }

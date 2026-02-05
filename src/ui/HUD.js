@@ -59,27 +59,54 @@ export class HUD {
         this.pauseBtn = document.createElement('button');
         this.pauseBtn.innerText = 'II';
         this.pauseBtn.style.position = 'absolute';
-        this.pauseBtn.style.top = '20px';
-        this.pauseBtn.style.right = '20px';
-        this.pauseBtn.style.width = '50px';
-        this.pauseBtn.style.height = '50px';
+        this.pauseBtn.style.top = 'max(20px, env(safe-area-inset-top) + 20px)';
+        this.pauseBtn.style.right = 'max(20px, env(safe-area-inset-right) + 20px)';
+        this.pauseBtn.style.width = '60px'; // Larger touch area
+        this.pauseBtn.style.height = '60px';
         this.pauseBtn.style.borderRadius = '50%';
         this.pauseBtn.style.border = 'none';
         this.pauseBtn.style.background = 'rgba(255,255,255,0.2)';
         this.pauseBtn.style.color = 'white';
-        this.pauseBtn.style.fontSize = '20px';
+        this.pauseBtn.style.fontSize = '24px'; // Larger text
         this.pauseBtn.style.fontWeight = 'bold';
         this.pauseBtn.style.cursor = 'pointer';
         this.pauseBtn.style.pointerEvents = 'auto';
         this.pauseBtn.style.backdropFilter = 'blur(4px)';
-        this.pauseBtn.onclick = () => { if (this.onPauseClick) this.onPauseClick(); };
+        this.pauseBtn.style.zIndex = '1001'; // Ensure it's above mostly everything
+        this.pauseBtn.style.display = 'flex'; // Center text better
+        this.pauseBtn.style.alignItems = 'center';
+        this.pauseBtn.style.justifyContent = 'center';
+        this.pauseBtn.style.touchAction = 'none'; // Critical for immediate response
+
+        // Robust handling for 'click' vs 'touch'
+        // We use a flag to prevent ghost clicks if both fire
+        let isHandling = false;
+        const triggerPause = (e) => {
+            if (e && e.cancelable) e.preventDefault();
+            e.stopPropagation();
+
+            if (isHandling) return;
+            isHandling = true;
+            setTimeout(() => { isHandling = false; }, 300); // Debounce
+
+            // Visual feedback
+            this.pauseBtn.style.transform = 'scale(0.9)';
+            setTimeout(() => this.pauseBtn.style.transform = 'scale(1)', 100);
+
+            if (this.onPauseClick) this.onPauseClick();
+        };
+
+        this.pauseBtn.addEventListener('touchstart', triggerPause, { passive: false });
+        this.pauseBtn.addEventListener('click', triggerPause);
 
         this.container.appendChild(this.scoreEl);
         this.container.appendChild(this.comboEl);
         this.container.appendChild(this.coinEl);
-        this.container.appendChild(this.pauseBtn);
 
+        // Append container first
         document.body.appendChild(this.container);
+        // Append button directly to body to avoid container pointer-events issues
+        document.body.appendChild(this.pauseBtn);
     }
 
     updateCoins(amount) {
@@ -176,10 +203,11 @@ export class HUD {
         this.scoreEl.innerText = '0';
         this.updateCoins(0);
         this.updateCombo(0);
-        this.pauseBtn.style.display = 'block';
+        if (this.pauseBtn) this.pauseBtn.style.display = 'flex';
     }
 
     hideGameUI() {
         this.container.style.display = 'none';
+        if (this.pauseBtn) this.pauseBtn.style.display = 'none';
     }
 }

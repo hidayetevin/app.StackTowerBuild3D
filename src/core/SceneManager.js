@@ -24,8 +24,8 @@ export class SceneManager {
 
         this.ground = new THREE.Mesh(groundGeo, groundMat);
         this.ground.rotation.x = -Math.PI / 2;
-        // Position at -10 to be visible at bottom but not intrusive
-        this.ground.position.y = -10;
+        // Position at -55 to be visible only at the very bottom as requested
+        this.ground.position.y = -25;
 
         // Ensure ground render order is higher than clouds to force it in front
         this.ground.renderOrder = 2;

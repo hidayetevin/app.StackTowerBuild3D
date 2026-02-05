@@ -1,4 +1,4 @@
-import { AdMob } from 'admob-plus-capacitor';
+import { AdMob, BannerAdPosition, RewardAdPluginEvents } from '@capacitor-community/admob';
 import Analytics from '../analytics/Analytics.js';
 import RewardSystem from './RewardSystem.js';
 
@@ -6,24 +6,9 @@ class AdsManager {
     constructor() {
         this.isInitialized = false;
         this.lastInterstitialTime = 0;
-        this.interstitialCooldown = 5000; // Reduced cooldown for button triggers
-        this.adIds = {
-             // REPLACE THESE WITH YOUR REAL IDS IF AVAILABLE, OTHERWISE USE TEST IDS
-            banner: 'ca-app-pub-4190858087915294/6293542928', 
-            interstitial: 'ca-app-pub-4190858087915294/1552244338', 
-            rewarded: 'ca-app-pub-4190858087915294/3667379581' 
-        };
-        // Use Test Ids for development if needed, but user supplied specific IDs in previous version.
-        // Keeping the IDs from the previous file content.
-        this.adIds = {
-            banner: 'ca-app-pub-3940256099942544/6300978111', // Test ID
-            interstitial: 'ca-app-pub-3940256099942544/1033173712', // Test ID
-            rewarded: 'ca-app-pub-3940256099942544/5224354917' // Test ID
-        };
-        // NOTE: Restoring user provided IDs if they were real, but usually for "didn't see ads" in APK, it's better to verify with Test IDs first. 
-        // However, user specifically asked to fix it. I will use the headers from the previous file but ensure AdMob is actually called.
-        // Actually, the previous file had specific IDs: 'ca-app-pub-4190858087915294/...' 
-        // I will restore THOSE IDs.
+        this.interstitialCooldown = 5000;
+
+        // Use Real IDs provided by user
         this.adIds = {
             banner: 'ca-app-pub-4190858087915294/6293542928',
             interstitial: 'ca-app-pub-4190858087915294/1552244338',
@@ -35,14 +20,18 @@ class AdsManager {
         try {
             await AdMob.initialize({
                 requestTrackingAuthorization: true,
-                initializeForTesting: false // Set to true if testing on device with test IDs
+                initializeForTesting: false
             });
             this.isInitialized = true;
-            console.log('AdMob initialized');
+            console.log('AdMob initialized (@capacitor-community/admob)');
             Analytics.track('ads_initialized');
-            
-            // Auto show banner on init as requested
+
+            // Auto show banner
             this.showBanner();
+
+            // Prepare ads in advance if possible (optional but good for performance)
+            this.prepareInterstitial();
+            this.prepareRewarded();
         } catch (error) {
             console.error('AdMob init failed:', error);
             this.isInitialized = false;
@@ -52,10 +41,11 @@ class AdsManager {
     async showBanner() {
         if (!this.isInitialized) return;
         try {
-            await AdMob.showBanner({ 
-                adId: this.adIds.banner, 
-                position: 'bottom',
-                offset: 0 
+            await AdMob.showBanner({
+                adId: this.adIds.banner,
+                position: BannerAdPosition.BOTTOM,
+                margin: 0,
+                isTesting: false
             });
             Analytics.track('ad_impression', { ad_type: 'banner', placement: 'bottom' });
         } catch (error) {
@@ -64,30 +54,56 @@ class AdsManager {
     }
 
     hideBanner() {
-        // User requested banner on ALL screens. 
-        // We will disable hiding unless explicitly needed for some overlapping UI.
-        // For now, doing nothing or logging.
-        console.log('Hide banner requested but ignored (Banner Peristent)');
+        console.log('Hide banner requested but ignored (Persistent Banner)');
+        // If we really wanted to hide: AdMob.hideBanner();
+    }
+
+    async prepareInterstitial() {
+        if (!this.isInitialized) return;
+        try {
+            await AdMob.prepareInterstitial({
+                adId: this.adIds.interstitial,
+                isTesting: false
+            });
+        } catch (e) {
+            console.log('Prepare interstitial failed', e);
+        }
     }
 
     async showInterstitial(force = false) {
         if (!this.isInitialized) return;
 
         const now = Date.now();
-        // If forced (button press), ignore cooldown
         if (!force && now - this.lastInterstitialTime < this.interstitialCooldown) {
             console.log('Interstitial on cooldown');
             return;
         }
 
         try {
-            await AdMob.prepareInterstitial({ adId: this.adIds.interstitial });
+            // Ensure prepared
+            await this.prepareInterstitial();
+
             await AdMob.showInterstitial();
             this.lastInterstitialTime = now;
             Analytics.track('ad_impression', { ad_type: 'interstitial', placement: force ? 'button_click' : 'game_over' });
+
+            // Prepare next one
+            this.prepareInterstitial();
         } catch (error) {
             console.warn('Interstitial failed:', error);
             Analytics.track('ad_failed', { ad_type: 'interstitial', reason: error.message || 'unknown' });
+        }
+    }
+
+    async prepareRewarded() {
+        if (!this.isInitialized) return;
+        try {
+            await AdMob.prepareRewardVideoAd({
+                adId: this.adIds.rewarded,
+                isTesting: false
+            });
+        } catch (e) {
+            console.log('Prepare rewarded failed', e);
         }
     }
 
@@ -98,27 +114,57 @@ class AdsManager {
             return true;
         }
 
-        try {
-            await AdMob.prepareRewardedAd({ adId: this.adIds.rewarded });
-            const result = await AdMob.showRewardedAd();
+        return new Promise(async (resolve) => {
+            let rewarded = false;
 
-            if (result && result.rewarded) {
-                Analytics.track('rewarded_ad_watched', { reward_type: rewardType });
-                RewardSystem.grantReward(rewardType);
-                return true;
-            } else {
-                return false;
+            // Setup listener for reward
+            const onReward = AdMob.addListener(RewardAdPluginEvents.Rewarded, (rewardItem) => {
+                console.log('User rewarded:', rewardItem);
+                rewarded = true;
+            });
+
+            // Setup listener for dismiss to cleanup
+            const onDismiss = AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
+                onReward.remove();
+                onDismiss.remove();
+                onFailed.remove();
+
+                if (rewarded) {
+                    Analytics.track('rewarded_ad_watched', { reward_type: rewardType });
+                    RewardSystem.grantReward(rewardType);
+                    resolve(true);
+                } else {
+                    resolve(false);
+                }
+                // Prepare next
+                this.prepareRewarded();
+            });
+
+            const onFailed = AdMob.addListener(RewardAdPluginEvents.FailedToLoad, (err) => {
+                console.warn('Rewarded failed to load', err);
+                onReward.remove();
+                onDismiss.remove();
+                onFailed.remove();
+                resolve(false);
+            });
+
+
+            try {
+                await this.prepareRewarded();
+                await AdMob.showRewardVideoAd();
+            } catch (error) {
+                console.warn('Rewarded show failed:', error);
+
+                // Cleanup listeners if show fails immediately
+                onReward.remove();
+                onDismiss.remove();
+                onFailed.remove();
+
+                Analytics.track('rewarded_ad_failed', { reason: error.message || 'unknown' });
+                // Do not grant reward on error unless offline (handled at top)
+                resolve(false);
             }
-        } catch (error) {
-            console.warn('Rewarded ad failed:', error);
-            Analytics.track('rewarded_ad_failed', { reason: error.message || 'unknown' });
-            // If ad fails to load, normally we don't grant reward to prevent abuse, 
-            // but for better UX in "broken ad" situations, some grant it.
-            // User requirement: "reklam gelmeli". 
-            // I'll stick to: if ad fails, return false, don't grant. 
-            // EXCEPT if offline/not-init where we grant.
-            return false;
-        }
+        });
     }
 }
 

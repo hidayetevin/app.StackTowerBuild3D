@@ -61,7 +61,7 @@ export class SceneManager {
         }
 
         // 3. Flying Objects
-        this.createBirds(40);
+        this.createBirds(30);
         this.createPlanes(5);
     }
 
@@ -246,7 +246,7 @@ export class SceneManager {
             // Random starting position
             const angle = Math.random() * Math.PI * 2;
             const radius = 20 + Math.random() * 40;
-            const height = 10 + Math.random() * 30; // 10-40 hight
+            const height = Math.random() * -10; // 10-40 hight
 
             bird.group.position.set(
                 Math.cos(angle) * radius,

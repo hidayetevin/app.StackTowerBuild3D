@@ -51,55 +51,44 @@ float heart(vec2 p) {
 }
 
 void main() {
-    // Simple vertical gradient based on UV y-coordinate
     vec3 gradientColor = mix(colorBottom, colorTop, vUv.y);
     
-    // Add subtle ambient shading based on normal
-    float ambient = 0.8;
-    float directional = max(dot(vNormal, vec3(0.5, 1.0, 0.5)), 0.0);
-    vec3 lighting = vec3(ambient + directional * 0.2);
+    // Optimized lighting
+    float ambient = 0.7;
+    float directional = max(vNormal.y * 0.3, 0.0); // Simpler lighting calculation
+    vec3 lighting = vec3(ambient + directional);
     
-    // Pattern Logic
     vec3 finalColor = gradientColor;
     float patternMask = 0.0;
     
-    // Only apply patterns to Top/Bottom faces or Side faces?
-    // Let's apply effectively on all, relying on UVs.
-    // Tile UVs for repeating patterns
-    vec2 tileUV = fract(vUv * 2.0) - 0.5; // 2x2 tiling
+    // Tiling for patterns
+    vec2 tileUV = fract(vUv * 2.0) - 0.5;
     
-    if (patternType == 1) { // Star
-        float d = star(tileUV, 0.25, 5, 3.0);
-        patternMask = 1.0 - smoothstep(0.0, 0.02, d);
+    if (patternType == 1) { // Optimized Star (Using simple logic instead of complex SDF)
+        vec2 p = abs(tileUV);
+        float d = max(p.x + p.y * 0.5, p.y + p.x * 0.5);
+        patternMask = step(d, 0.25);
     } 
-    else if (patternType == 2) { // Heart (Approximated circle/shape for MVP)
-        // Better heart SDF:
+    else if (patternType == 2) { // Heart (Simplified)
         vec2 p = tileUV;
-        p.y += 0.2;
+        p.y += 0.15;
         float r = length(p);
-        // Stick to simpler shape if complex math fails in WebGL1, assuming basic circle first
-        // Or simple Heart:
-        p.x *= 1.2;
-        p.y = -p.y * 1.2 + 0.3;
-        float h = p.x*p.x + p.y*p.y - 0.15;
-        patternMask = step(h * h * h, p.x*p.x * p.y*p.y*p.y);
+        patternMask = step(r, 0.25); // Simple circle fallback for ultra-performance
+        // Or slightly better heart shape without atan:
+        float h = p.x*p.x + (p.y-sqrt(abs(p.x)))*(p.y-sqrt(abs(p.x)));
+        patternMask = step(h, 0.15);
     }
-    else if (patternType == 3) { // Moon (Circle minus offset circle)
-        float d1 = length(tileUV) - 0.3;
-        float d2 = length(tileUV - vec2(0.15, 0.1)) - 0.25;
-        // Moon is intersection of d1 < 0 and d2 > 0
-        float m1 = 1.0 - smoothstep(0.0, 0.02, d1);
-        float m2 = 1.0 - smoothstep(0.0, 0.02, d2);
-        patternMask = m1 * (1.0 - m2);
+    else if (patternType == 3) { // Moon
+        float d1 = length(tileUV) - 0.25;
+        float d2 = length(tileUV - vec2(0.1, 0.1)) - 0.22;
+        patternMask = step(d1, 0.0) * step(0.0, d2);
     }
     else if (patternType == 4) { // Polka Dots
-        float d = length(tileUV) - 0.2;
-        patternMask = 1.0 - smoothstep(0.0, 0.02, d);
+        patternMask = step(length(tileUV), 0.15);
     }
     
-    // Mix pattern color (white-ish or lighter/darker)
     if (patternMask > 0.5) {
-        finalColor = mix(finalColor, vec3(1.0, 1.0, 1.0), 0.5); // Add white tint
+        finalColor = mix(finalColor, vec3(1.0), 0.3);
     }
 
     gl_FragColor = vec4(finalColor * lighting, opacity);

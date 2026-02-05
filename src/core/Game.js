@@ -133,9 +133,9 @@ export class Game {
         // await this.themeManager.loadThemes();
         await this.challengeManager.loadChallenges();
 
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0)); // Limit for mobile performance
         document.body.appendChild(this.renderer.domElement);
 
         this.performanceMonitor = new PerformanceMonitor(this.renderer);

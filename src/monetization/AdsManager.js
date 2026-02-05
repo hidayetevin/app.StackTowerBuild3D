@@ -1,6 +1,8 @@
-import { AdMob, BannerAdPosition, RewardAdPluginEvents } from '@capacitor-community/admob';
+import { AdMob, BannerAdPosition, RewardAdPluginEvents, InterstitialAdPluginEvents } from '@capacitor-community/admob';
+import { App } from '@capacitor/app';
 import Analytics from '../analytics/Analytics.js';
 import RewardSystem from './RewardSystem.js';
+import AudioManager from '../audio/AudioManager.js';
 
 class AdsManager {
     constructor() {
@@ -26,22 +28,29 @@ class AdsManager {
 
     setupListeners() {
         // Interstitial Listeners
-        AdMob.addListener('interstitialAdLoaded', () => {
+        AdMob.addListener(InterstitialAdPluginEvents.Loaded, () => {
             console.log('ADMOB: Interstitial Ready');
             this.states.interstitial = 'READY';
         });
 
-        AdMob.addListener('interstitialAdFailedToLoad', (info) => {
+        AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, (info) => {
             console.warn('ADMOB: Interstitial Failed to Load:', info);
             this.states.interstitial = 'ERROR';
             // Retry after 15s
             setTimeout(() => this.prepareInterstitial(), 15000);
         });
 
-        AdMob.addListener('interstitialAdDismissed', () => {
+        AdMob.addListener(InterstitialAdPluginEvents.Showed, () => {
+            console.log('ADMOB: Interstitial Showed - Pausing Audio');
+            AudioManager.pause();
+        });
+
+        AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
             console.log('ADMOB: Interstitial Dismissed - Reloading...');
             this.states.interstitial = 'IDLE';
             this.prepareInterstitial();
+            // Resume Music
+            AudioManager.resume();
         });
 
         // Rewarded Listeners
@@ -57,10 +66,27 @@ class AdsManager {
             setTimeout(() => this.prepareRewarded(), 20000);
         });
 
+        AdMob.addListener(RewardAdPluginEvents.Showed, () => {
+            console.log('ADMOB: Rewarded Showed - Pausing Audio');
+            AudioManager.pause();
+        });
+
         AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
             console.log('ADMOB: Rewarded Dismissed - Reloading...');
             this.states.rewarded = 'IDLE';
             this.prepareRewarded();
+            // Resume Music
+            AudioManager.resume();
+        });
+
+        // App State Listener (Background/Foreground)
+        App.addListener('appStateChange', ({ isActive }) => {
+            console.log('App state changed. Is active?', isActive);
+            if (isActive) {
+                AudioManager.resume();
+            } else {
+                AudioManager.pause();
+            }
         });
     }
 
@@ -135,6 +161,9 @@ class AdsManager {
         }
 
         try {
+            // Pause Music before showing ad
+            AudioManager.pause();
+
             await AdMob.showInterstitial();
             this.lastInterstitialTime = now;
             Analytics.track('ad_impression', { ad_type: 'interstitial', placement: force ? 'button_click' : 'game_over' });
@@ -142,6 +171,8 @@ class AdsManager {
             console.warn('Interstitial show failed:', error);
             this.states.interstitial = 'IDLE';
             this.prepareInterstitial();
+            // Resume music if show failed
+            AudioManager.resume();
         }
     }
 
@@ -194,6 +225,8 @@ class AdsManager {
             });
 
             try {
+                // Pause Music before showing ad
+                AudioManager.pause();
                 await AdMob.showRewardVideoAd();
             } catch (error) {
                 console.warn('Rewarded show failed:', error);
@@ -201,6 +234,8 @@ class AdsManager {
                 onDismiss.remove();
                 this.states.rewarded = 'IDLE';
                 this.prepareRewarded();
+                // Resume music if show failed
+                AudioManager.resume();
                 resolve(false);
             }
         });

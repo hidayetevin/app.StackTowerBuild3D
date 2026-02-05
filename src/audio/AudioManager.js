@@ -18,6 +18,15 @@ class AudioManager {
         this.bgmSource = null;
         this.bgmSpeed = 1.0;
         this.isPlayingMusic = false;
+
+        // Auto background handling
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.pause();
+            } else {
+                this.resume();
+            }
+        });
     }
 
     init() {
@@ -45,7 +54,7 @@ class AudioManager {
     }
 
     resumeContext() {
-        if (this.context && this.context.state === 'suspended') {
+        if (this.context && (this.context.state === 'suspended' || this.context.state === 'interrupted')) {
             const resume = () => {
                 this.context.resume();
                 document.removeEventListener('click', resume);
@@ -53,6 +62,20 @@ class AudioManager {
             };
             document.addEventListener('click', resume);
             document.addEventListener('touchstart', resume);
+            // Also try immediate resume for programatic calls
+            this.context.resume().catch(e => console.log("Immediate resume failed", e));
+        }
+    }
+
+    pause() {
+        if (this.context && this.context.state === 'running') {
+            this.context.suspend();
+        }
+    }
+
+    resume() {
+        if (this.context && (this.context.state === 'suspended' || this.context.state === 'interrupted')) {
+            this.context.resume();
         }
     }
 

@@ -12,6 +12,7 @@
     "@capacitor-community/admob": "latest",
     "@capacitor-firebase/analytics": "latest",
     "@capacitor/android": "latest",
+    "@capacitor/app": "^8.0.0",
     "@capacitor/core": "latest",
     "@capacitor/haptics": "latest",
     "@capacitor/ios": "latest",

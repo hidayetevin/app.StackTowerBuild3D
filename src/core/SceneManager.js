@@ -59,6 +59,10 @@ export class SceneManager {
             this.cloudGroup.add(cloud);
             this.clouds.push(cloud);
         }
+
+        // 3. Flying Objects
+        this.createBirds(40);
+        this.createPlanes(5);
     }
 
     createVoxelGround() {
@@ -234,6 +238,181 @@ export class SceneManager {
         return cloud;
     }
 
+    createBirds(count) {
+        this.birds = [];
+        for (let i = 0; i < count; i++) {
+            const bird = this.createBird();
+
+            // Random starting position
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 20 + Math.random() * 40;
+            const height = 10 + Math.random() * 30; // 10-40 hight
+
+            bird.group.position.set(
+                Math.cos(angle) * radius,
+                height,
+                Math.sin(angle) * radius
+            );
+
+            // Scale down birds slightly to fit scene
+            bird.group.scale.set(0.5, 0.5, 0.5);
+
+            this.birds.push({
+                group: bird.group,
+                wings: bird.wings,
+                path: {
+                    radius: radius,
+                    height: height,
+                    angle: angle,
+                    speed: 0.3 + Math.random() * 0.5,
+                    verticalSpeed: 0.2 + Math.random() * 0.3
+                }
+            });
+
+            this.worldGroup.add(bird.group);
+        }
+    }
+
+    createBird() {
+        const group = new THREE.Group();
+        group.renderOrder = -1;
+
+        // Body
+        const bodyGeometry = new THREE.SphereGeometry(0.3, 8, 8);
+        const bodyMaterial = new THREE.MeshStandardMaterial({
+            color: 0x333333,
+            roughness: 0.7
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.scale.set(1, 0.8, 1.5);
+        group.add(body);
+
+        // Head
+        const headGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+        const head = new THREE.Mesh(headGeometry, bodyMaterial);
+        head.position.set(0, 0.1, 0.4);
+        group.add(head);
+
+        // Beak
+        const beakGeometry = new THREE.ConeGeometry(0.08, 0.2, 4);
+        const beakMaterial = new THREE.MeshStandardMaterial({ color: 0xFF8C00 });
+        const beak = new THREE.Mesh(beakGeometry, beakMaterial);
+        beak.rotation.x = Math.PI / 2;
+        beak.position.set(0, 0.1, 0.6);
+        group.add(beak);
+
+        // Wings
+        const wingGeometry = new THREE.BoxGeometry(1.5, 0.1, 0.5);
+        const wingMaterial = new THREE.MeshStandardMaterial({
+            color: 0x555555,
+            roughness: 0.6
+        });
+
+        const leftWing = new THREE.Mesh(wingGeometry, wingMaterial);
+        leftWing.position.set(-0.75, 0, 0);
+
+        const rightWing = new THREE.Mesh(wingGeometry, wingMaterial);
+        rightWing.position.set(0.75, 0, 0);
+
+        group.add(leftWing);
+        group.add(rightWing);
+
+        return { group, wings: [leftWing, rightWing] };
+    }
+
+    createPlanes(count) {
+        this.planes = [];
+        for (let i = 0; i < count; i++) {
+            const plane = this.createPlane();
+
+            // Random starting position
+            const startX = -100 - Math.random() * 50;
+            const height = 20 + Math.random() * 40;
+            const startZ = -50 + Math.random() * 100;
+
+            plane.position.set(startX, height, startZ);
+            plane.rotation.y = Math.PI / 2;
+
+            // Adjust scale
+            plane.scale.set(0.8, 0.8, 0.8);
+
+            this.planes.push({
+                group: plane,
+                speed: 0.8 + Math.random() * 0.6,
+                height: height,
+                z: startZ
+            });
+
+            this.worldGroup.add(plane);
+        }
+    }
+
+    createPlane() {
+        const group = new THREE.Group();
+        group.renderOrder = -1;
+
+        // Fuselage (gövde)
+        const fuselageGeometry = new THREE.CylinderGeometry(0.5, 0.5, 5, 8);
+        const fuselageMaterial = new THREE.MeshStandardMaterial({
+            color: 0xC0C0C0,
+            metalness: 0.7,
+            roughness: 0.3
+        });
+        const fuselage = new THREE.Mesh(fuselageGeometry, fuselageMaterial);
+        fuselage.rotation.z = Math.PI / 2;
+        group.add(fuselage);
+
+        // Nose (burun)
+        const noseGeometry = new THREE.ConeGeometry(0.5, 1.5, 8);
+        const nose = new THREE.Mesh(noseGeometry, fuselageMaterial);
+        nose.rotation.z = -Math.PI / 2;
+        nose.position.x = 3.25;
+        group.add(nose);
+
+        // Wings (kanatlar)
+        const wingGeometry = new THREE.BoxGeometry(12, 0.2, 2);
+        const wingMaterial = new THREE.MeshStandardMaterial({
+            color: 0xFFFFFF,
+            metalness: 0.5,
+            roughness: 0.4
+        });
+        const wings = new THREE.Mesh(wingGeometry, wingMaterial);
+        wings.position.y = 0;
+        group.add(wings);
+
+        // Tail wing (kuyruk kanadı)
+        const tailWingGeometry = new THREE.BoxGeometry(3, 0.2, 1.5);
+        const tailWing = new THREE.Mesh(tailWingGeometry, wingMaterial);
+        tailWing.position.set(-2, 0, 0);
+        group.add(tailWing);
+
+        // Vertical stabilizer (dikey kuyruk)
+        const stabilizerGeometry = new THREE.BoxGeometry(0.2, 2, 1.5);
+        const stabilizer = new THREE.Mesh(stabilizerGeometry, wingMaterial);
+        stabilizer.position.set(-2, 1, 0);
+        group.add(stabilizer);
+
+        // Engines (motorlar)
+        const engineGeometry = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8);
+        const engineMaterial = new THREE.MeshStandardMaterial({
+            color: 0x444444,
+            metalness: 0.8,
+            roughness: 0.2
+        });
+
+        const leftEngine = new THREE.Mesh(engineGeometry, engineMaterial);
+        leftEngine.rotation.z = Math.PI / 2;
+        leftEngine.position.set(1, 0, -3.5);
+        group.add(leftEngine);
+
+        const rightEngine = new THREE.Mesh(engineGeometry, engineMaterial);
+        rightEngine.rotation.z = Math.PI / 2;
+        rightEngine.position.set(1, 0, 3.5);
+        group.add(rightEngine);
+
+        return group;
+    }
+
     createCloudTexture() {
         const canvas = document.createElement('canvas');
         canvas.width = 64;
@@ -254,7 +433,8 @@ export class SceneManager {
     }
 
     update(towerHeight) {
-        // Implement the "World Scroll" effect from prompt
+        // Disabled world scrolling and ground movement as requested
+        /*
         if (this.worldGroup) {
             this.worldGroup.position.y = -towerHeight * 0.5;
         }
@@ -267,7 +447,7 @@ export class SceneManager {
                 0.01
             );
         }
-
+        
         // Cloud movement
         if (this.clouds) {
             this.clouds.forEach(cloud => {
@@ -281,10 +461,53 @@ export class SceneManager {
                 }
             });
         }
+        */
 
         // Background color transition
         if (towerHeight > 50) {
             // Future implementation
+        }
+
+        // Animation updates
+        this.time = (this.time || 0) + 0.016;
+
+        // Animate birds
+        if (this.birds) {
+            this.birds.forEach((bird, i) => {
+                // Circular flight path with vertical movement
+                bird.path.angle += bird.path.speed * 0.01;
+
+                bird.group.position.x = Math.cos(bird.path.angle) * bird.path.radius;
+                bird.group.position.z = Math.sin(bird.path.angle) * bird.path.radius;
+                bird.group.position.y = bird.path.height + Math.sin(this.time * bird.path.verticalSpeed + i) * 3;
+
+                // Rotate to face direction
+                bird.group.rotation.y = -bird.path.angle; // Adjust rotation to face forward along circle
+                bird.group.rotation.x = Math.sin(this.time * 2 + i) * 0.1;
+
+                // Wing flapping
+                bird.wings.forEach((wing, j) => {
+                    wing.rotation.z = Math.sin(this.time * 15 + i) * 0.5 * (j === 0 ? 1 : -1);
+                });
+            });
+        }
+
+        // Animate planes
+        if (this.planes) {
+            this.planes.forEach((plane) => {
+                plane.group.position.x += plane.speed * 0.5; // Moderate speed
+
+                // Reset position when out of view
+                if (plane.group.position.x > 150) {
+                    plane.group.position.x = -150;
+                }
+
+                // Slight up and down movement
+                plane.group.position.y = plane.height + Math.sin(this.time * 0.5) * 2;
+
+                // Slight roll
+                plane.group.rotation.z = Math.sin(this.time * 0.3) * 0.05;
+            });
         }
     }
     setupLights() {

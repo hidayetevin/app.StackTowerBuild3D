@@ -411,6 +411,12 @@ export class Game {
         if (state === STATES.PLAYING || state === STATES.TUTORIAL) {
             this.tower.update(delta * this.speedMultiplier);
         }
+
+        // Update scene animations (clouds, birds, planes) regardless of game state or maybe just when playing? 
+        // Usually background should keep moving to feel alive even in menu, but let's stick to simple for now.
+        // Ideally should pass delta time for smoother animation, but currently sceneManager.update uses internal counter or just position.
+        this.sceneManager.update(this.tower.getHeight());
+
         this.cameraController.update(this.tower.getHeight());
         this.renderer.render(this.sceneManager.scene, this.cameraController.camera);
         this.performanceMonitor.update(delta);

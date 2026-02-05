@@ -25,7 +25,7 @@ export class CameraController {
         );
 
         this.targetY = GAME_CONFIG.CAMERA.INIT_POS.y;
-        this.smoothness = 0.1; // Lerp factor
+        this.smoothness = 0.99; // Increased to make rising faster
         this.renderSize = new THREE.Vector2(window.innerWidth, window.innerHeight);
     }
 

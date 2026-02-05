@@ -50,7 +50,7 @@ export class Game {
         this.tutorialSystem = new TutorialSystem(this);
 
         this.skinManager = new SkinManager(this.retentionSystem.saveSystem, this.tower);
-        this.themeManager = new ThemeManager(this.retentionSystem.saveSystem, this.sceneManager);
+        // this.themeManager = new ThemeManager(this.retentionSystem.saveSystem, this.sceneManager);
         this.challengeManager = new ChallengeManager();
 
         this.hud = new HUD(() => this.pauseGame());
@@ -59,8 +59,8 @@ export class Game {
         // Inject RetentionSystem here to update Coin balance in real-time on UI
         this.skinScreen.setRetentionSystem(this.retentionSystem);
 
-        this.themeScreen = new ThemeScreen(this.themeManager, Analytics);
-        this.themeScreen.setRetentionSystem(this.retentionSystem);
+        // this.themeScreen = new ThemeScreen(this.themeManager, Analytics);
+        // this.themeScreen.setRetentionSystem(this.retentionSystem);
 
         this.challengeScreen = new ChallengeScreen(this.challengeManager, Analytics, (challengeConfig) => {
             this.startChallenge(challengeConfig);
@@ -85,7 +85,7 @@ export class Game {
             onPlay: () => this.checkTutorialAndStart(),
             onSettings: () => this.settingsMenu.show(AudioManager.isMuted, AudioManager.isMusicMuted, HapticManager.enabled),
             onSkins: () => this.skinScreen.show(),
-            onThemes: () => this.themeScreen.show(),
+            // onThemes: () => this.themeScreen.show(),
             onChallenge: () => this.challengeScreen.show()
         });
 
@@ -130,7 +130,7 @@ export class Game {
         await AudioManager.loadAll();
 
         await this.skinManager.loadSkins();
-        await this.themeManager.loadThemes();
+        // await this.themeManager.loadThemes();
         await this.challengeManager.loadChallenges();
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -164,7 +164,7 @@ export class Game {
         this.mainMenu.show();
         this.gameOverScreen.hide();
         this.skinScreen.hide();
-        this.themeScreen.hide();
+        // this.themeScreen.hide(); // Theme removed
         this.challengeScreen.hide();
         this.pauseMenu.hide();
         AdsManager.showBanner();
@@ -360,7 +360,7 @@ export class Game {
             }
 
             this.skinManager.checkAutoUnlock(currentScore);
-            this.themeManager.checkAutoUnlock(currentScore);
+            // this.themeManager.checkAutoUnlock(currentScore);
 
             if (this.stateMachine.getState() === STATES.TUTORIAL) {
                 this.tutorialSystem.onBlockPlaced(result.result);

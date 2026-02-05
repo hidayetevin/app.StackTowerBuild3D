@@ -35,7 +35,6 @@ export class MainMenu {
             
             <div style="display:flex; gap:15px; margin-bottom: 20px;">
                 <button id="btn-skins" style="padding: 10px 20px; border-radius: 20px; border:none; background: #9C27B0; color: white; cursor: pointer;">${TXT('SKINS')}</button>
-                <button id="btn-themes" style="padding: 10px 20px; border-radius: 20px; border:none; background: #E91E63; color: white; cursor: pointer;">${TXT('THEMES')}</button>
             </div>
             
             <button id="btn-challenge" style="padding: 10px 40px; border-radius: 20px; border:none; background: #FF9800; color: white; cursor: pointer; margin-bottom: 20px; font-weight:bold;">🏆 ${TXT('CHALLENGE')}</button>
@@ -51,7 +50,6 @@ export class MainMenu {
         this.container.querySelector('#btn-settings').addEventListener('click', () => this.onSettings());
 
         this.container.querySelector('#btn-skins').addEventListener('click', () => callbacks.onSkins && callbacks.onSkins());
-        this.container.querySelector('#btn-themes').addEventListener('click', () => callbacks.onThemes && callbacks.onThemes());
         this.container.querySelector('#btn-challenge').addEventListener('click', () => callbacks.onChallenge && callbacks.onChallenge());
     }
 

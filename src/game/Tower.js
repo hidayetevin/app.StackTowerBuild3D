@@ -43,7 +43,7 @@ export class Tower {
     addBaseBlock() {
         const baseBlock = new Block(
             this.baseSize,
-            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, -2, 0),
             'static',
             this.determineBlockColor()
         );

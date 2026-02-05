@@ -30,7 +30,7 @@ export class SceneManager {
         this.worldGroup.add(this.cloudGroup);
 
         this.clouds = [];
-        const cloudCount = 15; // Increased count for better saturation
+        const cloudCount = 25; // Increased count for better saturation
         const texture = this.createCloudTexture();
         const baseMaterial = new THREE.SpriteMaterial({
             map: texture,

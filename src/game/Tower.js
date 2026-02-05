@@ -53,7 +53,8 @@ export class Tower {
     }
 
     determineBlockColor() {
-        if (this.activeSkin && this.activeSkin.id !== 'default') {
+        // If it's a patterned skin or the default skin, use the rainbow progression
+        if (this.activeSkin && this.activeSkin.id !== 'default' && !this.activeSkin.patternType) {
             return this.activeSkin.color;
         }
         return this.getRainbowColor();

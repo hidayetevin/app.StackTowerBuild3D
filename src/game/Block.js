@@ -56,10 +56,10 @@ export class Block {
         this.state = 'STOPPED';
     }
 
-    setColor(hexColor) {
+    setColor(color) {
         if (this.material.uniforms) {
-            this.material.uniforms.colorTop.value.setHex(hexColor).offsetHSL(0, 0, 0.1);
-            this.material.uniforms.colorBottom.value.setHex(hexColor).offsetHSL(0, 0, -0.1);
+            this.material.uniforms.colorTop.value.set(color).offsetHSL(0, 0, 0.1);
+            this.material.uniforms.colorBottom.value.set(color).offsetHSL(0, 0, -0.1);
         }
     }
 

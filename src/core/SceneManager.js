@@ -26,6 +26,10 @@ export class SceneManager {
         this.ground.rotation.x = -Math.PI / 2;
         // Position at -10 to be visible at bottom but not intrusive
         this.ground.position.y = -10;
+
+        // Ensure ground render order is higher than clouds to force it in front
+        this.ground.renderOrder = 2;
+
         this.worldGroup.add(this.ground);
 
         // 2. Cloud System
@@ -52,8 +56,8 @@ export class SceneManager {
             cloud.position.x = (Math.random() - 0.5) * 80;
             // Height variance: Keep them in the "sky" but visible
             cloud.position.y = -5 + Math.random() * 50;
-            // Depth variance
-            cloud.position.z = -10 - Math.random() * 30;
+            // Depth variance: Push further back to ensure separation from ground
+            cloud.position.z = -30 - Math.random() * 40;
 
             // Random scaling for the whole cloud group
             const globalScale = 1 + Math.random() * 0.5;
@@ -66,6 +70,9 @@ export class SceneManager {
 
     createCloud(type, material) {
         const cloud = new THREE.Group();
+        // Set renderOrder for the whole group to ensure it renders behind the ground
+        cloud.renderOrder = -1;
+
         let particles = 0;
 
         // Define shape generation logic
@@ -74,6 +81,8 @@ export class SceneManager {
             particles = 8 + Math.floor(Math.random() * 5);
             for (let j = 0; j < particles; j++) {
                 const sprite = new THREE.Sprite(material.clone());
+                sprite.renderOrder = -1; // Ensure sprites conform to the background order
+
                 // Central mass with some spread
                 sprite.position.set(
                     (Math.random() - 0.5) * 6,
@@ -93,13 +102,15 @@ export class SceneManager {
             particles = 6 + Math.floor(Math.random() * 4);
             for (let j = 0; j < particles; j++) {
                 const sprite = new THREE.Sprite(material.clone());
+                sprite.renderOrder = -1;
+
                 sprite.position.set(
                     (Math.random() - 0.5) * 12, // Wider
                     (Math.random() - 0.5) * 2,  // Flatter
                     (Math.random() - 0.5) * 3
                 );
                 const scale = 5 + Math.random() * 4;
-                sprite.scale.set(scale, scale * 0.7, 1); // Slightly flattened sprites? No, keep aspect ratio 1:1 on sprite usually, but spread them out
+                sprite.scale.set(scale, scale * 0.7, 1); // Slightly flattened
                 sprite.material.opacity = 0.6 + Math.random() * 0.3;
                 cloud.add(sprite);
             }
@@ -108,6 +119,8 @@ export class SceneManager {
             particles = 3 + Math.floor(Math.random() * 3);
             for (let j = 0; j < particles; j++) {
                 const sprite = new THREE.Sprite(material.clone());
+                sprite.renderOrder = -1;
+
                 sprite.position.set(
                     (Math.random() - 0.5) * 4,
                     (Math.random() - 0.5) * 3,

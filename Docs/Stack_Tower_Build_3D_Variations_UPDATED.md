@@ -75,6 +75,7 @@ Skin'ler **sadece blok görünümünü** değiştirir:
 - rewarded_ad: Rewarded ad izle
 - daily_login: X gün login yap
 - mission_complete: Mission tamamla
+- accuracy_streak: Oyun içi ardışık başarılı vuruşlarla coin kazanıp satın al
 - purchase: Coin ile satın al
 ```
 

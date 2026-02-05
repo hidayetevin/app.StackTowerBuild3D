@@ -41,14 +41,18 @@ Oyuncu, yatayda hareket eden blokları doğru zamanda bırakarak mümkün olan e
 - **Tek Dokunuş (Tap)**
 - Blok hareketi otomatik
 - Oyuncu sadece zamanlamaya odaklanır
+- **Mobile Touch Handling:**
+  - Ghost clicks önlemek için 'touchstart' ve 'click' olayları debounce edilir.
+  - UI elementleri (Pause butonu vb.) touch event'lere öncelik verir.
 
 ---
 
 ## 4. MEKANİKLER
 
 ### 4.1 Hizalama Sistemi
-- %95+ hizalama → Perfect
-- %70–95 → Good
+- %95+ hizalama → Perfect (Görsel: "PERFECT!" / "MÜKEMMEL!", Ses: Yüksek Pitch)
+- %90–95 → Great (Görsel: "GREAT!" / "HARİKA!")
+- %70–90 → Good (Görsel: "GOOD!" / "İYİ!")
 - %70 altı → Bad (blok daralır)
 
 ### 4.2 Perfect & Combo
@@ -135,6 +139,10 @@ Mission 3: Reach score 50 (Reward: Random skin)
 - Gradient arka plan (Sky / Void)
 - Glow efekt sadece Perfect anlarında
 - Particle effects: Minimal (perfect hit için 10-15 particle)
+- **UI Feedback:**
+  - Floating Coins: Başarılı vuruşlarda kule üzerinden UI'a uçan coin animasyonu.
+  - Text Pops: Perfect/Great vuruşlarda ekranda beliren dinamik yazılar.
+  - Haptic Feedback: Başarı oranına göre titreşim (Light/Medium/Failure).
 
 ---
 
@@ -179,6 +187,8 @@ if (AudioContext.state === 'suspended') {
 - **Combo multiplier** → Extra points (combo x 10)
 - **High score** → LocalStorage
 - **Coin system** → Unlock skins/themes
+  - **Accuracy Streak:** Ardışık başarılı vuruşlarda anında coin kazanımı.
+  - **Rewards:** Floating Coin animasyonu ile anlık geribildirim.
 
 ---
 
@@ -426,8 +436,9 @@ Example: 1.0.0 (launch), 1.1.0 (themes), 1.1.1 (bugfix)
 ✅ Daily login bonus  
 ✅ 3 tema (Sky, Neon, Lava)  
 ✅ 5 skin  
-❌ Leaderboard (v1.1.0)  
-❌ Challenge mode (v1.2.0)  
+✅ Leaderboard (v1.1.0)  
+✅ Challenge mode (v1.2.0 - Implemented)
+✅ Localization (EN/TR support implemented)  
 
 ---
 
@@ -491,20 +502,14 @@ Phase 2 (Post-launch):
 
 ## 23. LOCALIZATION (Future)
 
-### Priority Languages
-1. English (default)
-2. Turkish
-3. Spanish
-4. Portuguese
-5. Arabic
+### Durum: Kısmen Tamamlandı (Partially Implemented)
+- **Mevcut Diller:** English (EN), Turkish (TR)
+- **Yöntem:** `LocalizationManager` sınıfı ve JSON tabanlı sözlük.
+- **Kapsam:** UI metinleri, oyun içi geri bildirimler (Perfect/Mükemmel).
 
-### Implementation
 ```javascript
-// i18n.js
-const strings = {
-  en: { play: "Play", retry: "Retry" },
-  tr: { play: "Oyna", retry: "Tekrar Dene" }
-};
+// LocalizationManager usage
+const text = LocalizationManager.get('PLAY_BUTTON');
 ```
 
 ---

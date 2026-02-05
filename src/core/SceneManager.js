@@ -62,7 +62,6 @@ export class SceneManager {
 
         // 3. Flying Objects
         this.createBirds(30);
-        this.createPlanes(5);
     }
 
     createVoxelGround() {
@@ -320,32 +319,6 @@ export class SceneManager {
         return { group, wings: [leftWing, rightWing] };
     }
 
-    createPlanes(count) {
-        this.planes = [];
-        for (let i = 0; i < count; i++) {
-            const plane = this.createPlane();
-
-            // Random starting position
-            const startX = -100 - Math.random() * 50;
-            const height = 20 + Math.random() * 40;
-            const startZ = -50 + Math.random() * 100;
-
-            plane.position.set(startX, height, startZ);
-            plane.rotation.y = Math.PI / 2;
-
-            // Adjust scale
-            plane.scale.set(0.8, 0.8, 0.8);
-
-            this.planes.push({
-                group: plane,
-                speed: 0.8 + Math.random() * 0.6,
-                height: height,
-                z: startZ
-            });
-
-            this.worldGroup.add(plane);
-        }
-    }
 
     createPlane() {
         const group = new THREE.Group();

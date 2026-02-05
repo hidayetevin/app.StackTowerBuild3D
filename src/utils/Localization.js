@@ -2,8 +2,8 @@ export const TEXTS = {
     EN: {
         PLAY: "PLAY",
         SETTINGS: "SETTINGS",
-        SKINS: "SKINS",
-        THEMES: "THEMES",
+        SKINS: "STYLE", // Changed from SKINS to STYLE
+        THEMES: "WORLD", // Changed from THEMES to WORLD
         CHALLENGE: "CHALLENGE",
         GAME_OVER: "GAME OVER",
         SCORE: "Score",
@@ -55,8 +55,8 @@ export const TEXTS = {
     TR: {
         PLAY: "OYNA",
         SETTINGS: "AYARLAR",
-        SKINS: "KOSTÜM",
-        THEMES: "TEMA",
+        SKINS: "STİL", // Changed from KOSTÜM to STİL
+        THEMES: "DÜNYA", // Changed from TEMA to DÜNYA
         CHALLENGE: "GÖREV",
         GAME_OVER: "OYUN BİTTİ",
         SCORE: "Skor",

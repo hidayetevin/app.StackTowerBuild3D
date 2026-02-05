@@ -67,9 +67,18 @@ export class Game {
         });
 
         this.pauseMenu = new PauseMenu({
-            onResume: () => this.resumeGame(),
-            onRestart: () => this.checkTutorialAndStart(),
-            onMenu: () => this.goToMenu()
+            onResume: async () => {
+                await AdsManager.showInterstitial(true);
+                this.resumeGame();
+            },
+            onRestart: async () => {
+                await AdsManager.showInterstitial(true);
+                this.checkTutorialAndStart();
+            },
+            onMenu: async () => {
+                await AdsManager.showInterstitial(true);
+                this.goToMenu();
+            }
         });
 
         this.mainMenu = new MainMenu({
@@ -81,8 +90,14 @@ export class Game {
         });
 
         this.gameOverScreen = new GameOverScreen({
-            onRetry: () => this.checkTutorialAndStart(),
-            onMenu: () => this.goToMenu()
+            onRetry: async () => {
+                await AdsManager.showInterstitial(true);
+                this.checkTutorialAndStart();
+            },
+            onMenu: async () => {
+                await AdsManager.showInterstitial(true);
+                this.goToMenu();
+            }
         });
         this.gameOverScreen.setRetentionSystem(this.retentionSystem);
 
@@ -175,7 +190,7 @@ export class Game {
     }
 
     checkTutorialAndStart() {
-        AdsManager.hideBanner();
+        // AdsManager.hideBanner(); // Keep banner visible as per request
         this.mainMenu.hide();
         this.gameOverScreen.hide();
         this.pauseMenu.hide();
@@ -377,7 +392,7 @@ export class Game {
         this.stateMachine.setState(STATES.GAMEOVER);
         this.hud.hideGameUI();
         Analytics.track('game_over', { score: this.scoring.getScore(), max_combo: this.scoring.getCombo() });
-        AdsManager.showInterstitial();
+        // AdsManager.showInterstitial(); // Removed auto interstitial, moved to button clicks
         this.gameOverScreen.setScore(this.scoring.getScore(), this.sessionCoins || 0);
         this.gameOverScreen.show();
     }

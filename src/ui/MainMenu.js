@@ -11,6 +11,8 @@ export class MainMenu {
         this.container.style.left = '0';
         this.container.style.width = '100%';
         this.container.style.height = '100%';
+        this.container.style.boxSizing = 'border-box'; // Space for Banner
+        this.container.style.paddingBottom = '60px';
         this.container.style.display = 'flex';
         this.container.style.flexDirection = 'column';
         this.container.style.alignItems = 'center';

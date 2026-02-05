@@ -8,6 +8,7 @@ export class GameOverScreen {
         this.container.id = 'game-over';
         this.container.style.cssText = `
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            padding-bottom: 60px; box-sizing: border-box; /* Space for Banner */
             display: none; flex-direction: column; align-items: center; justify-content: center;
             background-color: rgba(0,0,0,0.85); z-index: 1000; opacity: 0; transition: opacity 0.5s ease-in;
         `;

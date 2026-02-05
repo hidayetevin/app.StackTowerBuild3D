@@ -10,6 +10,8 @@ export class PauseMenu {
         this.container.style.left = '0';
         this.container.style.width = '100%';
         this.container.style.height = '100%';
+        this.container.style.boxSizing = 'border-box';
+        this.container.style.paddingBottom = '60px';
         this.container.style.display = 'none';
         this.container.style.flexDirection = 'column';
         this.container.style.alignItems = 'center';

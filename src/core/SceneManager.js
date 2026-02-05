@@ -18,18 +18,11 @@ export class SceneManager {
     }
 
     initEnvironment() {
-        // 1. Ground (Green Plane)
-        const groundGeo = new THREE.PlaneGeometry(100, 100);
-        const groundMat = new THREE.MeshLambertMaterial({ color: 0x3fa34d });
-
-        this.ground = new THREE.Mesh(groundGeo, groundMat);
-        this.ground.rotation.x = -Math.PI / 2;
-        // Position at -55 to be visible only at the very bottom as requested
+        // 1. Ground (Voxel Grass Terrain)
+        this.ground = this.createVoxelGround();
+        // Position at -25 as requested
         this.ground.position.y = -25;
-
-        // Ensure ground render order is higher than clouds to force it in front
         this.ground.renderOrder = 2;
-
         this.worldGroup.add(this.ground);
 
         // 2. Cloud System
@@ -66,6 +59,113 @@ export class SceneManager {
             this.cloudGroup.add(cloud);
             this.clouds.push(cloud);
         }
+    }
+
+    createVoxelGround() {
+        const terrainGroup = new THREE.Group();
+        // Use a larger block size for the game scale
+        const BLOCK_SIZE = 1.5;
+        // Grid size to cover enough area (approx 40x1.5 = 60 width)
+        const GRID_SIZE = 40;
+
+        for (let x = -GRID_SIZE / 2; x < GRID_SIZE / 2; x++) {
+            for (let z = -GRID_SIZE / 2; z < GRID_SIZE / 2; z++) {
+                const distance = Math.sqrt(x * x + z * z);
+                // Create a circular island effect
+                if (distance > GRID_SIZE / 2) continue;
+
+                // Slight height variation logic from example
+                const noise = Math.sin(x * 0.2) * Math.cos(z * 0.2);
+                const height = Math.max(0, 1 - distance / (GRID_SIZE / 2)) * 1.5 + noise * 0.3;
+                const blockHeight = Math.max(1, Math.floor(height));
+
+                // Create blocks for this column
+                for (let y = 0; y < blockHeight; y++) {
+                    const geometry = new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+
+                    // Determine color (dirt brown for lower blocks, grass green for top)
+                    const isTopBlock = (y === blockHeight - 1);
+                    let color;
+
+                    if (isTopBlock) {
+                        // Grass top - varied greens
+                        const greenVariation = 0.8 + Math.random() * 0.4;
+                        color = new THREE.Color(
+                            0.15 * greenVariation,
+                            0.45 * greenVariation,
+                            0.15 * greenVariation
+                        );
+                    } else {
+                        // Dirt - browns
+                        color = new THREE.Color(
+                            0.35 + Math.random() * 0.1,
+                            0.25 + Math.random() * 0.1,
+                            0.15
+                        );
+                    }
+
+                    const material = new THREE.MeshLambertMaterial({
+                        color: color
+                    });
+
+                    const block = new THREE.Mesh(geometry, material);
+                    block.position.set(
+                        x * BLOCK_SIZE,
+                        y * BLOCK_SIZE, // Offset so y=0 is bottom? Actually just stack them
+                        z * BLOCK_SIZE
+                    );
+                    block.receiveShadow = true;
+                    terrainGroup.add(block);
+                }
+
+                // Add grass blades on top of the top block
+                if (Math.random() > 0.4) { // 60% chance
+                    const grassBlade = this.createSimpleGrassBlade(BLOCK_SIZE);
+                    grassBlade.position.set(
+                        x * BLOCK_SIZE + (Math.random() - 0.5) * BLOCK_SIZE * 0.6,
+                        blockHeight * BLOCK_SIZE - (BLOCK_SIZE * 0.5), // Adjust to sit on top
+                        z * BLOCK_SIZE + (Math.random() - 0.5) * BLOCK_SIZE * 0.6
+                    );
+                    grassBlade.position.y += BLOCK_SIZE; // Move up to surface
+                    grassBlade.rotation.y = Math.random() * Math.PI * 2;
+                    terrainGroup.add(grassBlade);
+                }
+            }
+        }
+        return terrainGroup;
+    }
+
+    createSimpleGrassBlade(scaleUnit) {
+        const group = new THREE.Group();
+
+        // Simple 2-3 segment grass blade
+        const segments = 2 + Math.floor(Math.random() * 2);
+        const baseWidth = 0.06 * scaleUnit; // Scale width generally
+
+        for (let i = 0; i < segments; i++) {
+            const size = baseWidth * (1 - i / segments * 0.4);
+            const height = size * 3; // Make them a bit taller relative to width
+            const geometry = new THREE.BoxGeometry(size, height, size);
+
+            // Gradient from dark to light green
+            const brightness = 0.7 + (i / segments) * 0.5;
+            const color = new THREE.Color(
+                0.15 * brightness,
+                0.5 * brightness,
+                0.15 * brightness
+            );
+
+            const material = new THREE.MeshLambertMaterial({
+                color: color
+            });
+
+            const segment = new THREE.Mesh(geometry, material);
+            segment.position.y = i * height * 0.8;
+            segment.position.x = i * size * 0.3; // Slight lean
+            group.add(segment);
+        }
+
+        return group;
     }
 
     createCloud(type, material) {

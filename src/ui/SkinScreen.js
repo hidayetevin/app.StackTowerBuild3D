@@ -86,6 +86,33 @@ export class SkinScreen {
             colorDiv.style.width = '100%';
             colorDiv.style.height = '60px';
             colorDiv.style.background = skin.color;
+            colorDiv.style.display = 'flex';
+            colorDiv.style.alignItems = 'center';
+            colorDiv.style.justifyContent = 'center';
+
+            if (skin.patternType) {
+                let patternHTML = '';
+                const size = '30px';
+                const opacity = '0.7';
+
+                if (skin.patternType === 1) { // Star
+                    patternHTML = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="white" style="opacity:${opacity};"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+                } else if (skin.patternType === 2) { // Heart
+                    patternHTML = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="white" style="opacity:${opacity};"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+                } else if (skin.patternType === 3) { // Moon
+                    patternHTML = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="white" style="opacity:${opacity};"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4C12.92 3.04 12.46 3 12 3z"/></svg>`;
+                } else if (skin.patternType === 4) { // Polka
+                    patternHTML = `<div style="display:flex; flex-wrap:wrap; width:100%; height:100%; justify-content:space-around; align-items:center;">
+                        <div style="width:8px; height:8px; background:white; opacity:${opacity}; border-radius:50%;"></div>
+                        <div style="width:8px; height:8px; background:white; opacity:${opacity}; border-radius:50%;"></div>
+                        <div style="width:8px; height:8px; background:white; opacity:${opacity}; border-radius:50%;"></div>
+                        <div style="width:8px; height:8px; background:white; opacity:${opacity}; border-radius:50%;"></div>
+                    </div>`;
+                }
+
+                if (patternHTML) colorDiv.innerHTML = patternHTML;
+            }
+
             el.appendChild(colorDiv);
 
             // Info

@@ -10,7 +10,7 @@ export const PERFORMANCE = {
 export const GAME_CONFIG = {
     BLOCK_HEIGHT: 1.0,
     INITIAL_BLOCK_SIZE: 3.0,
-    BLOCK_START_POS: 6.0, // Distance from center where block spawns
+    BLOCK_START_POS: 5, // Distance from center where block spawns
     BASE_SPEED: 5.0,
     SPEED_INCREMENT: 0.1,
     PERFECT_TOLERANCE: 0.05, // Error margin for perfect alignment

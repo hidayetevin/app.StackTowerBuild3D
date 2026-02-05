@@ -3,7 +3,7 @@ import { GAME_CONFIG } from '../utils/Constants.js';
 import { VERTEX_SHADER, FRAGMENT_SHADER } from './Shaders.js';
 
 export class Block {
-    constructor(size, position, direction, color = GAME_CONFIG.COLORS.BLOCK_BASE) {
+    constructor(size, position, direction, color = GAME_CONFIG.COLORS.BLOCK_BASE, patternType = 0) {
         this.size = { ...size };
         this.geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
 
@@ -12,7 +12,8 @@ export class Block {
             uniforms: {
                 colorTop: { value: new THREE.Color(color).offsetHSL(0, 0, 0.1) },
                 colorBottom: { value: new THREE.Color(color).offsetHSL(0, 0, -0.1) },
-                opacity: { value: 1.0 }
+                opacity: { value: 1.0 },
+                patternType: { value: patternType } // 0: None, 1: Star, 2: Heart, 3: Moon, 4: Polka
             },
             vertexShader: VERTEX_SHADER,
             fragmentShader: FRAGMENT_SHADER
@@ -24,6 +25,7 @@ export class Block {
         this.direction = direction;
         this.speed = GAME_CONFIG.BASE_SPEED;
         this.state = 'MOVING';
+        this.patternType = patternType;
     }
 
     update(delta) {
@@ -53,6 +55,13 @@ export class Block {
         }
     }
 
+    setPattern(type) {
+        if (this.material.uniforms && this.material.uniforms.patternType) {
+            this.material.uniforms.patternType.value = type;
+            this.patternType = type;
+        }
+    }
+
     resize(newSize, newPosition) {
         this.size = { ...newSize };
         this.geometry.dispose();
@@ -61,11 +70,12 @@ export class Block {
         this.mesh.position.copy(newPosition);
     }
 
-    reset(size, position, direction, speed) {
+    reset(size, position, direction, speed, patternType = 0) {
         this.state = 'MOVING';
         this.direction = direction;
         this.speed = speed;
         this.resize(size, position);
+        this.setPattern(patternType);
         this.mesh.visible = true;
     }
 }

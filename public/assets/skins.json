@@ -55,6 +55,42 @@
             "emissive": "#00ff00",
             "unlockMethod": "score_threshold",
             "unlockValue": 250
+        },
+        {
+            "id": "starry",
+            "name": "Starry Night",
+            "color": "#483D8B",
+            "emissive": "#FFFF00",
+            "unlockMethod": "coins",
+            "unlockValue": 150,
+            "patternType": 1
+        },
+        {
+            "id": "love",
+            "name": "Deep Love",
+            "color": "#FF69B4",
+            "emissive": "#FF1493",
+            "unlockMethod": "coins",
+            "unlockValue": 150,
+            "patternType": 2
+        },
+        {
+            "id": "moon",
+            "name": "Moonlight",
+            "color": "#2F4F4F",
+            "emissive": "#C0C0C0",
+            "unlockMethod": "coins",
+            "unlockValue": 200,
+            "patternType": 3
+        },
+        {
+            "id": "polka",
+            "name": "Polka Fun",
+            "color": "#FF4500",
+            "emissive": "#FFFFFF",
+            "unlockMethod": "coins",
+            "unlockValue": 100,
+            "patternType": 4
         }
     ]
 }

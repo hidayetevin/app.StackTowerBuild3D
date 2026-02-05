@@ -79,14 +79,18 @@ export class Tower {
         const currentSize = { ...prevBlock.size };
         currentSize.y = GAME_CONFIG.BLOCK_HEIGHT;
 
-        newBlock.reset(currentSize, startPos, direction, speed);
+        // Determine Pattern from Active Skin
+        let patternType = 0;
+        if (this.activeSkin && this.activeSkin.patternType) {
+            patternType = this.activeSkin.patternType;
+        }
+
+        newBlock.reset(currentSize, startPos, direction, speed, patternType);
         newBlock.setColor(this.determineBlockColor());
 
         // If we have advanced skin properties (emissive etc), apply them here
         if (this.activeSkin && newBlock.material.uniforms) {
-            // NOTE: Our simple shader supports top/bottom color.
-            // Complex PBR properties from skin JSON would need ShaderMaterial update or StandardMaterial.
-            // For MVP + Variation Pack, we stick to color overrides.
+            // Note: Currently pattern is additive/mix.
         }
 
         this.sceneManager.add(newBlock.mesh);

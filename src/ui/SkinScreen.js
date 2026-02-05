@@ -23,10 +23,10 @@ export class SkinScreen {
     buildUI() {
         this.container.innerHTML = `
             <div id="skin-balance" style="position:absolute; top:20px; right:20px; color:#FFD700; font-size:24px; font-weight:bold;"></div>
-            <h2 id="skin-title" style="color:white; font-family:Arial; margin-bottom:30px;">SKINS</h2>
-            <div id="skin-list" style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center; max-width: 80%;"></div>
-            <p id="skin-msg" style="color:white; margin-top:20px; font-style:italic; height:20px;"></p>
-            <button id="btn-close-skins" style="margin-top:20px; padding:10px 30px; border-radius:20px; border:none; background:#555; color:white; font-size:16px;">CLOSE</button>
+            <h2 id="skin-title" style="color:white; font-family:Arial; margin-bottom:15px; margin-top: 10px;">SKINS</h2>
+            <div id="skin-list" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; justify-items:center; width: 95%; max-height: 65vh; overflow-y: auto; padding: 10px;"></div>
+            <p id="skin-msg" style="color:white; margin-top:10px; font-size: 14px; font-style:italic; height:20px;"></p>
+            <button id="btn-close-skins" style="margin-top:10px; margin-bottom: 20px; padding:12px 40px; border-radius:30px; border:none; background:#555; color:white; font-size:18px; font-weight:bold; cursor:pointer; pointer-events:auto;">CLOSE</button>
         `;
 
         this.container.querySelector('#btn-close-skins').addEventListener('click', () => this.hide());
@@ -73,12 +73,12 @@ export class SkinScreen {
         skins.forEach(skin => {
             const el = document.createElement('div');
             el.style.cssText = `
-                width: 90px; height: 110px; border-radius: 10px;
+                width: 85px; height: 105px; border-radius: 10px;
                 background: #333; 
                 border: 3px solid ${skin.unlocked ? (this.skinManager.currentSkinId === skin.id ? '#FFFF00' : 'white') : '#555'};
                 display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
                 cursor: pointer; position: relative; opacity: ${skin.unlocked ? 1 : 0.8};
-                overflow: hidden;
+                overflow: hidden; pointer-events: auto;
             `;
 
             // Preview Color

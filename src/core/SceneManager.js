@@ -63,10 +63,10 @@ export class SceneManager {
 
     createVoxelGround() {
         const terrainGroup = new THREE.Group();
-        // Use a larger block size for the game scale
-        const BLOCK_SIZE = 1.5;
-        // Grid size to cover enough area (approx 40x1.5 = 60 width)
-        const GRID_SIZE = 40;
+        // Use a smaller block size for finer detail
+        const BLOCK_SIZE = 0.8;
+        // Grid size needs to be larger to cover the same area (approx 70x0.8 = 56 width)
+        const GRID_SIZE = 70;
 
         for (let x = -GRID_SIZE / 2; x < GRID_SIZE / 2; x++) {
             for (let z = -GRID_SIZE / 2; z < GRID_SIZE / 2; z++) {

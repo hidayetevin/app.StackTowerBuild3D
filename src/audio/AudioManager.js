@@ -13,10 +13,10 @@ class AudioManager {
 
         this.initialized = false;
 
-        // Melody for background (simple sequence)
-        this.melodyNotes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]; // C Major
-        this.melodyIndex = 0;
-        this.nextNoteTime = 0;
+        // Music Properties
+        this.bgmBuffer = null;
+        this.bgmSource = null;
+        this.bgmSpeed = 1.0;
         this.isPlayingMusic = false;
     }
 
@@ -37,8 +37,6 @@ class AudioManager {
             this.applyMuteState();
 
             this.initialized = true;
-            console.log('Audio (Procedural) Initialized');
-
             this.resumeContext();
 
         } catch (e) {
@@ -55,6 +53,69 @@ class AudioManager {
             };
             document.addEventListener('click', resume);
             document.addEventListener('touchstart', resume);
+        }
+    }
+
+    async loadAll() {
+        if (!this.initialized) this.init();
+
+        // Load Music
+        try {
+            const response = await fetch('assets/music.mp3');
+            const arrayBuffer = await response.arrayBuffer();
+            this.bgmBuffer = await this.context.decodeAudioData(arrayBuffer);
+            console.log("Music Loaded");
+        } catch (e) {
+            console.warn('Failed to load music', e);
+        }
+
+        return Promise.resolve();
+    }
+
+    playMusic() {
+        if (!this.initialized || !this.bgmBuffer || this.isPlayingMusic) return;
+
+        // Stop previous instance if any
+        if (this.bgmSource) {
+            try { this.bgmSource.stop(); } catch (e) { }
+        }
+
+        this.bgmSource = this.context.createBufferSource();
+        this.bgmSource.buffer = this.bgmBuffer;
+        this.bgmSource.loop = true; // Loop is handled natively by Web Audio API
+        this.bgmSource.playbackRate.value = this.bgmSpeed;
+
+        this.bgmSource.connect(this.musicGain);
+        this.bgmSource.start(0);
+
+        this.isPlayingMusic = true;
+    }
+
+    stopMusic() {
+        if (this.bgmSource) {
+            try { this.bgmSource.stop(); } catch (e) { }
+            this.bgmSource = null;
+        }
+        this.isPlayingMusic = false;
+    }
+
+    setMusicSpeed(speed) {
+        // Map game speed (usually 5.0 base) to playback rate (1.0 base)
+        // Adjust these factors based on game feel. 
+        // Example: speed 5 -> 1.0, speed 10 -> 1.5
+        // Or pass in a normalized multiplier directly.
+
+        // Assuming 'speed' passed here is the Game Speed Multiplier (1.0 + increment) or raw speed?
+        // Let's assume normalized multiplier (1.0, 1.1, 1.2...)
+        this.bgmSpeed = 0.8 + (speed * 0.2); // Start slightly slower, ramp up
+
+        // Clamp
+        if (this.bgmSpeed < 0.5) this.bgmSpeed = 0.5;
+        if (this.bgmSpeed > 2.0) this.bgmSpeed = 2.0;
+
+        if (this.bgmSource) {
+            // Smooth transition
+            this.bgmSource.playbackRate.setTargetAtTime(this.bgmSpeed, this.context.currentTime, 0.5);
         }
     }
 
@@ -128,53 +189,6 @@ class AudioManager {
         osc.stop(time + duration);
     }
 
-    // Simple procedural ambient loop
-    playMusic() {
-        if (!this.initialized || this.isPlayingMusic) return;
-        this.isPlayingMusic = true;
-        this.scheduleNextNote();
-    }
-
-    scheduleNextNote() {
-        if (!this.isPlayingMusic) return;
-
-        // Simple generative ambient: random notes from C Major scale
-        // Very slow, ambient feel
-        const duration = 2.0;
-        const now = this.context.currentTime;
-        const nextTime = Math.max(now, this.nextNoteTime);
-
-        if (nextTime - now < 0.1) {
-            const note = this.melodyNotes[Math.floor(Math.random() * this.melodyNotes.length)];
-            // Shift octave randomly
-            const octave = Math.random() > 0.5 ? 1 : 0.5;
-
-            const osc = this.context.createOscillator();
-            const gain = this.context.createGain();
-
-            osc.type = 'sine';
-            osc.frequency.value = note * octave;
-
-            // Soft attack and release for ambient pad effect
-            gain.connect(this.musicGain);
-            gain.gain.setValueAtTime(0, nextTime);
-            gain.gain.linearRampToValueAtTime(0.2, nextTime + 1.0);
-            gain.gain.linearRampToValueAtTime(0, nextTime + duration);
-
-            osc.start(nextTime);
-            osc.stop(nextTime + duration);
-
-            this.nextNoteTime = nextTime + 1.5; // Overlap slightly
-        }
-
-        // Loop check
-        requestAnimationFrame(() => this.scheduleNextNote());
-    }
-
-    stopMusic() {
-        this.isPlayingMusic = false;
-    }
-
     toggleMute() {
         this.isMuted = !this.isMuted;
         this.saveSystem.set('audio_muted', this.isMuted);
@@ -186,6 +200,9 @@ class AudioManager {
         this.isMusicMuted = !this.isMusicMuted;
         this.saveSystem.set('music_muted', this.isMusicMuted);
         this.applyMuteState();
+        if (this.isMusicMuted) {
+            // Optionally pause source, but mute via Gain is easier for sync
+        }
         return this.isMusicMuted;
     }
 
@@ -193,12 +210,6 @@ class AudioManager {
         if (!this.masterGain) return;
         this.sfxGain.gain.setTargetAtTime(this.isMuted ? 0 : 1.0, this.context.currentTime, 0.1);
         this.musicGain.gain.setTargetAtTime((this.isMuted || this.isMusicMuted) ? 0 : 0.3, this.context.currentTime, 0.1);
-    }
-
-    // Placeholder to satisfy interface but we play procedural music immediately
-    loadAll() {
-        if (!this.initialized) this.init();
-        return Promise.resolve();
     }
 }
 

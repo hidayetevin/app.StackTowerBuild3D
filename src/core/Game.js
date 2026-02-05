@@ -148,7 +148,7 @@ export class Game {
         this.gameLoop.start();
 
         this.retentionSystem.checkDailyLogin();
-        AudioManager.playMusic();
+        // AudioManager.playMusic(); // Wait for game start
         this.loadingScreen.hide();
     }
 
@@ -160,6 +160,8 @@ export class Game {
         if (this.mainMenu && this.mainMenu.updateCoins) {
             this.mainMenu.updateCoins(this.retentionSystem.getCoins());
         }
+
+        AudioManager.stopMusic();
 
         this.mainMenu.show();
         this.gameOverScreen.hide();
@@ -179,6 +181,7 @@ export class Game {
         if (state === STATES.PLAYING || state === STATES.TUTORIAL) {
             this.stateMachine.setState(STATES.PAUSED);
             this.pauseMenu.show();
+            AudioManager.stopMusic(); // Stop on pause
         }
     }
 
@@ -186,6 +189,7 @@ export class Game {
         if (this.stateMachine.getState() === STATES.PAUSED) {
             this.stateMachine.setState(STATES.PLAYING);
             this.pauseMenu.hide();
+            AudioManager.playMusic(); // Resume on playing
         }
     }
 
@@ -197,6 +201,7 @@ export class Game {
         this.hud.showGameUI();
         this.hud.updateCoins(this.retentionSystem.getCoins());
         AudioManager.playSound('tap');
+        AudioManager.playMusic();
 
         if (!this.tutorialSystem.isCompleted()) {
             this.startTutorial();
@@ -217,6 +222,21 @@ export class Game {
         this.resetGameLogic();
         Analytics.track('challenge_start', { type: config.type });
         this.tower.spawnNextBlock(this.difficulty.getSpeed() * this.speedMultiplier);
+        AudioManager.playMusic();
+    }
+
+    // ... existing startTutorial and startGame ... 
+
+    // ...
+
+    gameOver() {
+        this.stateMachine.setState(STATES.GAMEOVER);
+        AudioManager.stopMusic();
+        this.hud.hideGameUI();
+        Analytics.track('game_over', { score: this.scoring.getScore(), max_combo: this.scoring.getCombo() });
+        // AdsManager.showInterstitial(); // Removed auto interstitial, moved to button clicks
+        this.gameOverScreen.setScore(this.scoring.getScore(), this.sessionCoins || 0);
+        this.gameOverScreen.show();
     }
 
     startTutorial() {
@@ -370,7 +390,14 @@ export class Game {
             }
 
             this.cameraController.update(this.tower.getHeight());
-            this.tower.spawnNextBlock(this.difficulty.getSpeed() * this.speedMultiplier);
+            const nextSpeed = this.difficulty.getSpeed() * this.speedMultiplier;
+            this.tower.spawnNextBlock(nextSpeed);
+
+            // Adjust music speed based on difficulty
+            // Normalize: Base is 5.0. 
+            // Music Speed 1.0 at 5.0, 1.5 at 10.0 ??
+            const speedFactor = Math.max(0, (nextSpeed - 5.0) / 5.0); // 0 at 5.0, 1 at 10.0
+            AudioManager.setMusicSpeed(speedFactor);
         }
     }
 

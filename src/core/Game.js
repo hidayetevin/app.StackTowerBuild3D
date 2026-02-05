@@ -8,10 +8,8 @@ import { Scoring } from '../game/Scoring.js';
 import { Difficulty } from '../game/Difficulty.js';
 import { HUD } from '../ui/HUD.js';
 import { STATES, GAME_CONFIG } from '../utils/Constants.js';
-import { TutorialSystem } from '../systems/TutorialSystem.js';
 import { RetentionSystem } from '../systems/RetentionSystem.js';
 import { ErrorHandler } from '../systems/ErrorHandler.js';
-import { TutorialOverlay } from '../ui/TutorialOverlay.js';
 import { MainMenu } from '../ui/MainMenu.js';
 import { GameOverScreen } from '../ui/GameOverScreen.js';
 import { SettingsMenu } from '../ui/SettingsMenu.js';
@@ -47,7 +45,6 @@ export class Game {
         this.scoring = new Scoring();
         this.difficulty = new Difficulty();
         this.retentionSystem = new RetentionSystem();
-        this.tutorialSystem = new TutorialSystem(this);
 
         this.skinManager = new SkinManager(this.retentionSystem.saveSystem, this.tower);
         // this.themeManager = new ThemeManager(this.retentionSystem.saveSystem, this.sceneManager);
@@ -110,9 +107,6 @@ export class Game {
             },
             onClose: () => { }
         });
-
-        this.tutorialOverlay = new TutorialOverlay(() => this.tutorialSystem.skip());
-        this.tutorialSystem.setOverlay(this.tutorialOverlay);
 
         this.update = this.update.bind(this);
         this.speedMultiplier = 1.0;
@@ -183,7 +177,7 @@ export class Game {
 
     pauseGame() {
         const state = this.stateMachine.getState();
-        if (state === STATES.PLAYING || state === STATES.TUTORIAL) {
+        if (state === STATES.PLAYING) {
             this.stateMachine.setState(STATES.PAUSED);
             this.pauseMenu.show();
             AudioManager.stopMusic(); // Stop on pause
@@ -208,11 +202,7 @@ export class Game {
         AudioManager.playSound('tap');
         AudioManager.playMusic();
 
-        if (!this.tutorialSystem.isCompleted()) {
-            this.startTutorial();
-        } else {
-            this.startGame();
-        }
+        this.startGame();
     }
 
     // ... startChallenge, startTutorial, startGame ...
@@ -244,14 +234,6 @@ export class Game {
         this.gameOverScreen.show();
     }
 
-    startTutorial() {
-        this.stateMachine.setState(STATES.TUTORIAL);
-        this.resetGameLogic();
-        this.tutorialSystem.start();
-        Analytics.track('tutorial_begin');
-        this.tower.spawnNextBlock(this.difficulty.getSpeed() * this.speedMultiplier);
-    }
-
     startGame() {
         this.stateMachine.setState(STATES.PLAYING);
         this.resetGameLogic();
@@ -274,7 +256,7 @@ export class Game {
         const state = this.stateMachine.getState();
         if (state === STATES.MENU || state === STATES.PAUSED) {
             // UI
-        } else if (state === STATES.PLAYING || state === STATES.TUTORIAL) {
+        } else if (state === STATES.PLAYING) {
             AudioManager.resumeContext();
             this.placeBlock();
         }
@@ -440,7 +422,7 @@ export class Game {
 
     update(delta) {
         const state = this.stateMachine.getState();
-        if (state === STATES.PLAYING || state === STATES.TUTORIAL) {
+        if (state === STATES.PLAYING) {
             this.tower.update(delta * this.speedMultiplier);
         }
 

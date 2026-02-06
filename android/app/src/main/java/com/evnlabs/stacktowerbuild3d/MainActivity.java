@@ -1,4 +1,4 @@
-package com.stacktower.game;
+package com.evnlabs.stacktowerbuild3d;
 
 import android.os.Build;
 import android.os.Bundle;

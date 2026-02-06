@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.stacktower.game"
+    namespace = "com.evnlabs.stacktowerbuild3d"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.stacktower.game"
+        applicationId "com.evnlabs.stacktowerbuild3d"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

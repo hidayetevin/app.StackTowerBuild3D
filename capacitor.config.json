@@ -1,5 +1,5 @@
 {
-    "appId": "com.stacktower.game",
+    "appId": "com.evnlabs.stacktowerbuild3d",
     "appName": "Stack Tower 3D",
     "webDir": "dist",
     "server": {

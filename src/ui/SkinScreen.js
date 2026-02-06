@@ -194,8 +194,12 @@ export class SkinScreen {
                         this.showMessage(TXT('ERROR_NO_COIN_SYS'));
                     }
                 }
+            } else if (skin.unlockMethod === 'score_threshold') {
+                this.showMessage(`${TXT('SCORE_REQ')} ${skin.unlockValue}`);
+            } else if (skin.unlockMethod === 'daily_login') {
+                this.showMessage(`${TXT('DAY_REQ')} ${skin.unlockValue}`);
             } else {
-                this.showMessage(`${TXT('UNLOCK_VIA')} ${skin.unlockMethod}`);
+                this.showMessage(TXT('LOCKED'));
             }
         }
     }

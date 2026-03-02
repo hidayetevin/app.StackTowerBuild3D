@@ -1,5 +1,6 @@
 import AdsManager from '../monetization/AdsManager.js';
 import LocalizationManager from '../utils/LocalizationManager.js';
+import ConfirmModal from './ConfirmModal.js';
 
 export class ThemeScreen {
     constructor(themeManager, analytics) {
@@ -130,32 +131,38 @@ export class ThemeScreen {
         } else {
             console.log("Locked theme clicked:", theme.name);
             if (theme.unlockMethod === 'coins') {
-                if (confirm(`${TXT('BUY_FOR')} ${theme.unlockValue} Coins?`)) {
-                    if (this.retentionSystem) {
-                        const success = this.themeManager.unlockWithCoins(theme.id, this.retentionSystem);
-                        if (success) {
-                            this.themeManager.applyTheme(theme.id);
-                            this.renderList();
-                            this.showMessage(`${TXT('BOUGHT')} ${theme.name}!`);
-                            // Update HUD immediately
-                            if (window.gameInstance && window.gameInstance.hud) {
-                                window.gameInstance.hud.updateCoins(this.retentionSystem.getCoins());
+                ConfirmModal.show({
+                    message: `${TXT('BUY_FOR')} ${theme.unlockValue} Coins?`,
+                    onConfirm: () => {
+                        if (this.retentionSystem) {
+                            const success = this.themeManager.unlockWithCoins(theme.id, this.retentionSystem);
+                            if (success) {
+                                this.themeManager.applyTheme(theme.id);
+                                this.renderList();
+                                this.showMessage(`${TXT('BOUGHT')} ${theme.name}!`);
+                                // Update HUD immediately
+                                if (window.gameInstance && window.gameInstance.hud) {
+                                    window.gameInstance.hud.updateCoins(this.retentionSystem.getCoins());
+                                }
+                            } else {
+                                this.showMessage(TXT('NOT_ENOUGH_COINS'));
                             }
-                        } else {
-                            this.showMessage(TXT('NOT_ENOUGH_COINS'));
                         }
                     }
-                }
+                });
             } else if (theme.unlockMethod === 'rewarded_trial') {
-                if (confirm(TXT('TRIAL_CONFIRM'))) {
-                    const success = await AdsManager.showRewarded('try_theme');
-                    if (success) {
-                        this.themeManager.applyTheme(theme.id, true);
-                        this.themeManager.markTrialUsed(theme.id);
-                        this.hide();
-                        alert(TXT('SESSION_APPLIED'));
+                ConfirmModal.show({
+                    message: TXT('TRIAL_CONFIRM'),
+                    onConfirm: async () => {
+                        const success = await AdsManager.showRewarded('try_theme');
+                        if (success) {
+                            this.themeManager.applyTheme(theme.id, true);
+                            this.themeManager.markTrialUsed(theme.id);
+                            this.hide();
+                            alert(TXT('SESSION_APPLIED')); // Keeping alert for now as it's info only, or can replace later.
+                        }
                     }
-                }
+                });
             } else {
                 this.showMessage(`${TXT('UNLOCK_VIA')} ${theme.unlockMethod}`);
             }

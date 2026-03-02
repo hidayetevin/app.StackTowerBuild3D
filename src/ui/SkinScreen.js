@@ -1,5 +1,6 @@
 import AdsManager from '../monetization/AdsManager.js';
 import LocalizationManager from '../utils/LocalizationManager.js';
+import ConfirmModal from './ConfirmModal.js';
 
 export class SkinScreen {
     constructor(skinManager, analytics) {
@@ -163,37 +164,43 @@ export class SkinScreen {
             console.log("Locked skin clicked:", skin.name);
 
             if (skin.unlockMethod === 'rewarded_ad') {
-                if (confirm(`${TXT('WATCH_AD_CONFIRM')} (${skin.name})`)) {
-                    const success = await AdsManager.showRewarded('unlock_skin');
-                    if (success) {
-                        this.skinManager.unlockSkin(skin.id);
-                        this.skinManager.applySkin(skin.id);
-                        this.renderList();
-                        this.showMessage(`${TXT('SKIN_UNLOCKED')} ${skin.name}!`);
-                    } else {
-                        this.showMessage(TXT('AD_FAILED'));
-                    }
-                }
-            } else if (skin.unlockMethod === 'coins') {
-                if (confirm(`${TXT('BUY_FOR')} ${skin.unlockValue} Coins?`)) {
-                    if (this.retentionSystem) {
-                        const success = this.skinManager.unlockWithCoins(skin.id, this.retentionSystem);
+                ConfirmModal.show({
+                    message: `${TXT('WATCH_AD_CONFIRM')} (${skin.name})`,
+                    onConfirm: async () => {
+                        const success = await AdsManager.showRewarded('unlock_skin');
                         if (success) {
+                            this.skinManager.unlockSkin(skin.id);
                             this.skinManager.applySkin(skin.id);
                             this.renderList();
-                            this.updateBalance();
-                            this.showMessage(`${TXT('BOUGHT')} ${skin.name}!`);
-                            // Update HUD immediately
-                            if (window.gameInstance && window.gameInstance.hud) {
-                                window.gameInstance.hud.updateCoins(this.retentionSystem.getCoins());
+                            this.showMessage(`${TXT('SKIN_UNLOCKED')} ${skin.name}!`);
+                        } else {
+                            this.showMessage(TXT('AD_FAILED'));
+                        }
+                    }
+                });
+            } else if (skin.unlockMethod === 'coins') {
+                ConfirmModal.show({
+                    message: `${TXT('BUY_FOR')} ${skin.unlockValue} Coins?`,
+                    onConfirm: () => {
+                        if (this.retentionSystem) {
+                            const success = this.skinManager.unlockWithCoins(skin.id, this.retentionSystem);
+                            if (success) {
+                                this.skinManager.applySkin(skin.id);
+                                this.renderList();
+                                this.updateBalance();
+                                this.showMessage(`${TXT('BOUGHT')} ${skin.name}!`);
+                                // Update HUD immediately
+                                if (window.gameInstance && window.gameInstance.hud) {
+                                    window.gameInstance.hud.updateCoins(this.retentionSystem.getCoins());
+                                }
+                            } else {
+                                this.showMessage(TXT('NOT_ENOUGH_COINS'));
                             }
                         } else {
-                            this.showMessage(TXT('NOT_ENOUGH_COINS'));
+                            this.showMessage(TXT('ERROR_NO_COIN_SYS'));
                         }
-                    } else {
-                        this.showMessage(TXT('ERROR_NO_COIN_SYS'));
                     }
-                }
+                });
             } else if (skin.unlockMethod === 'score_threshold') {
                 this.showMessage(`${TXT('SCORE_REQ')} ${skin.unlockValue}`);
             } else if (skin.unlockMethod === 'daily_login') {

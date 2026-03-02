@@ -27,6 +27,7 @@ float circle(vec2 uv, float r) {
     return length(uv) - r;
 }
 
+// Exact 2D SDF for a Star by Inigo Quilez
 float star(vec2 p, float r, int n, float m) {
     // n: points, m: sharpness
     float an = 3.141593 / float(n);
@@ -38,16 +39,6 @@ float star(vec2 p, float r, int n, float m) {
     p -= r*acs;
     p += ecs*clamp(-dot(p,ecs), 0.0, r*acs.y/ecs.y);
     return length(p)*sign(p.x);
-}
-
-float heart(vec2 p) {
-    p.y -= 0.3; // Center adjustment
-    float a = atan(p.x, p.y)/3.141593;
-    float r = length(p);
-    float h = abs(p.x);
-    return r - (0.5 + 0.2*p.y + 0.1*sin(15.0*a)); 
-    // Simplified heart approximation SDF
-    // Alternatively: (x^2+y^2-1)^3 - x^2*y^3 = 0
 }
 
 void main() {
@@ -64,26 +55,19 @@ void main() {
     // Tiling for patterns
     vec2 tileUV = fract(vUv * 2.0) - 0.5;
     
-    if (patternType == 1) { // Optimized Star (Using simple logic instead of complex SDF)
-        vec2 p = abs(tileUV);
-        float d = max(p.x + p.y * 0.5, p.y + p.x * 0.5);
-        patternMask = step(d, 0.25);
+    if (patternType == 1) { // Star (Using the proper SDF)
+        // Flip Y to make the star point upwards correctly
+        vec2 p = tileUV * vec2(1.0, -1.0);
+        // radius 0.25, 5 points, 3.0 sharpness
+        float d = star(p, 0.25, 5, 2.5);
+        patternMask = step(d, 0.0);
     } 
-    else if (patternType == 2) { // Heart (Improved SDF)
-        vec2 p = tileUV;
-        // Shift up slightly
-        p.y += 0.1;
-        // Scale to fit visually
-        p *= 1.2;
-        // Classic heart equation: (x^2 + y^2 - 1)^3 - x^2 * y^3 <= 0
-        // We rearrange: h = (x^2 + y^2 - 1)^3 - x^2 * y^3
-        float x2 = p.x * p.x;
-        float y2 = p.y * p.y;
-        float a = x2 + y2 - 0.1; // 0.1 is size parameter
-        float h = a * a * a - x2 * y2 * p.y;
-        
-        // Anti-aliased edge or simple step
-        patternMask = step(h, 0.0);
+    else if (patternType == 2) { // Heart (Apple/Cardioid approximation)
+        vec2 p = tileUV * 3.0;
+        p.y += 0.45; // Center it visually
+        p.x *= 1.1; // Make it beautifully wide
+        p.y -= sqrt(abs(p.x)) * 0.7; // The top cleft
+        patternMask = step(length(p), 0.85); // Defines the rounded bottom part
     }
     else if (patternType == 3) { // Moon
         float d1 = length(tileUV) - 0.25;
@@ -95,7 +79,7 @@ void main() {
     }
     
     if (patternMask > 0.5) {
-        finalColor = mix(finalColor, vec3(1.0), 0.3);
+        finalColor = mix(finalColor, vec3(1.0), 0.3); // Mix pattern color
     }
 
     gl_FragColor = vec4(finalColor * lighting, opacity);

@@ -69,14 +69,21 @@ void main() {
         float d = max(p.x + p.y * 0.5, p.y + p.x * 0.5);
         patternMask = step(d, 0.25);
     } 
-    else if (patternType == 2) { // Heart (Simplified)
+    else if (patternType == 2) { // Heart (Improved SDF)
         vec2 p = tileUV;
-        p.y += 0.15;
-        float r = length(p);
-        patternMask = step(r, 0.25); // Simple circle fallback for ultra-performance
-        // Or slightly better heart shape without atan:
-        float h = p.x*p.x + (p.y-sqrt(abs(p.x)))*(p.y-sqrt(abs(p.x)));
-        patternMask = step(h, 0.15);
+        // Shift up slightly
+        p.y += 0.1;
+        // Scale to fit visually
+        p *= 1.2;
+        // Classic heart equation: (x^2 + y^2 - 1)^3 - x^2 * y^3 <= 0
+        // We rearrange: h = (x^2 + y^2 - 1)^3 - x^2 * y^3
+        float x2 = p.x * p.x;
+        float y2 = p.y * p.y;
+        float a = x2 + y2 - 0.1; // 0.1 is size parameter
+        float h = a * a * a - x2 * y2 * p.y;
+        
+        // Anti-aliased edge or simple step
+        patternMask = step(h, 0.0);
     }
     else if (patternType == 3) { // Moon
         float d1 = length(tileUV) - 0.25;
